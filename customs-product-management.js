@@ -234,7 +234,7 @@ function toggleSearchForm() {
                 row.style.display = 'none';
             }
         });
-        toggleText.textContent = '收起';
+        toggleText.textContent = '展开';
         toggleIcon.textContent = '▼';
     }
 }
@@ -1472,6 +1472,27 @@ function toggleSelectAll(checkbox) {
 
 // 注意：状态TAB联动功能已在handleStatusTabChange()函数中实现
 // 该函数使用正确的多选组件逻辑，无需重复实现
+
+// 初始化多选组件
+function initMultiSelectComponents() {
+    console.log('初始化多选组件...');
+    const containers = document.querySelectorAll('.multi-select-container');
+    
+    containers.forEach(container => {
+        const containerId = container.id;
+        console.log('初始化多选组件:', containerId);
+        
+        // 创建多选组件实例
+        try {
+            const multiSelect = new MultiSelectComponent(containerId);
+            console.log('多选组件创建成功:', containerId);
+        } catch (error) {
+            console.error('创建多选组件失败:', containerId, error);
+        }
+    });
+    
+    console.log('多选组件初始化完成');
+}
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {

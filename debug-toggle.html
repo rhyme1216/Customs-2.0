@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>折叠功能调试</title>
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .search-row {
+            border: 2px solid #007bff;
+            margin: 10px 0;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        .search-row h3 {
+            margin: 0;
+            color: #007bff;
+        }
+        .toggle-link {
+            display: inline-block;
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .debug-info {
+            background: #fff3cd;
+            padding: 10px;
+            border: 1px solid #ffeaa7;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>折叠功能调试页面</h1>
+    
+    <div class="debug-info">
+        <strong>调试信息：</strong>
+        <div id="debug-output">等待点击...</div>
+    </div>
+
+    <div class="search-form">
+        <div class="search-row">
+            <h3>第一行 - 应该始终显示</h3>
+            <p>这是第一行内容，收起时应该保持可见</p>
+        </div>
+        
+        <div class="search-row">
+            <h3>第二行 - 收起时应该隐藏</h3>
+            <p>这是第二行内容，收起时应该被隐藏</p>
+        </div>
+        
+        <div class="search-row">
+            <h3>第三行 - 收起时应该隐藏</h3>
+            <p>这是第三行内容，收起时应该被隐藏</p>
+        </div>
+        
+        <div class="search-row">
+            <h3>第四行 - 收起时应该隐藏</h3>
+            <p>这是第四行内容，收起时应该被隐藏</p>
+        </div>
+    </div>
+
+    <a href="javascript:void(0)" class="toggle-link" id="search-toggle" onclick="debugToggleSearchForm()">
+        <span id="toggle-text">收起</span>
+        <span id="toggle-icon">▲</span>
+    </a>
+
+    <script>
+        function debugToggleSearchForm() {
+            console.log('=== 折叠函数开始执行 ===');
+            
+            const debugOutput = document.getElementById('debug-output');
+            debugOutput.innerHTML = '函数开始执行...<br>';
+            
+            try {
+                const toggleText = document.getElementById('toggle-text');
+                const toggleIcon = document.getElementById('toggle-icon');
+                
+                console.log('toggleText元素:', toggleText);
+                console.log('toggleIcon元素:', toggleIcon);
+                debugOutput.innerHTML += `toggleText: ${toggleText ? '找到' : '未找到'}<br>`;
+                debugOutput.innerHTML += `toggleIcon: ${toggleIcon ? '找到' : '未找到'}<br>`;
+                
+                if (!toggleText || !toggleIcon) {
+                    console.log('元素未找到，函数返回');
+                    debugOutput.innerHTML += '错误：元素未找到！<br>';
+                    return;
+                }
+                
+                const currentText = toggleText.textContent.trim();
+                console.log('当前按钮文本:', currentText);
+                debugOutput.innerHTML += `当前文本: "${currentText}"<br>`;
+                
+                const isCollapsed = currentText === '展开';
+                console.log('是否处于收起状态:', isCollapsed);
+                debugOutput.innerHTML += `是否收起状态: ${isCollapsed}<br>`;
+                
+                // 获取所有查询行
+                const searchRows = document.querySelectorAll('.search-form .search-row');
+                console.log('找到的查询行数量:', searchRows.length);
+                debugOutput.innerHTML += `查询行数量: ${searchRows.length}<br>`;
+                
+                if (isCollapsed) {
+                    // 展开：显示所有行
+                    console.log('执行展开操作');
+                    debugOutput.innerHTML += '执行展开操作...<br>';
+                    searchRows.forEach((row, index) => {
+                        row.style.display = '';
+                        console.log(`第${index + 1}行设置为显示`);
+                    });
+                    toggleText.textContent = '收起';
+                    toggleIcon.textContent = '▲';
+                    debugOutput.innerHTML += '展开完成！<br>';
+                } else {
+                    // 收起：只保留第一行
+                    console.log('执行收起操作');
+                    debugOutput.innerHTML += '执行收起操作...<br>';
+                    searchRows.forEach((row, index) => {
+                        if (index === 0) {
+                            row.style.display = '';
+                            console.log(`第${index + 1}行保持显示`);
+                        } else {
+                            row.style.display = 'none';
+                            console.log(`第${index + 1}行设置为隐藏`);
+                        }
+                    });
+                    toggleText.textContent = '展开';
+                    toggleIcon.textContent = '▼';
+                    debugOutput.innerHTML += '收起完成！<br>';
+                }
+                
+                console.log('=== 折叠函数执行完成 ===');
+                debugOutput.innerHTML += '函数执行完成！<br>';
+                
+            } catch (error) {
+                console.error('函数执行出错:', error);
+                debugOutput.innerHTML += `错误: ${error.message}<br>`;
+            }
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成');
+            const debugOutput = document.getElementById('debug-output');
+            debugOutput.innerHTML = '页面已加载，可以点击按钮测试<br>';
+        });
+    </script>
+</body>
+</html>
