@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关务商品管理</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="customs-product.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="menu">
+            <div class="menu-item">
+                <div class="menu-title" data-menu="product">商品管理</div>
+                <div class="submenu" id="product-submenu">
+                    <div class="submenu-item">跨境商品管理</div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-title" data-menu="tax">税务管理</div>
+                <div class="submenu" id="tax-submenu">
+                    <div class="submenu-item" data-tariff="true">关务税则维护</div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-title active" data-menu="customs">关务管理</div>
+                <div class="submenu open" id="customs-submenu">
+                    <div class="submenu-item active" data-customs-product="true">关务商品管理</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content-wrapper">
+        <div class="container">
+            <!-- 面包屑导航 -->
+            <div class="breadcrumb">
+                <span>首页</span>
+                <span class="separator">></span>
+                <span>关务管理</span>
+                <span class="separator">></span>
+                <span>关务商品管理</span>
+            </div>
+
+            <!-- 状态标签 -->
+            <div class="status-tabs">
+                <button class="status-tab active" data-status="all">全部 <span class="badge">0</span></button>
+                <button class="status-tab" data-status="customs-pending">关务未评估 <span class="badge">0</span></button>
+                <button class="status-tab" data-status="cert-pending">认证未评估 <span class="badge">0</span></button>
+                <button class="status-tab" data-status="element-pending">要素未确认 <span class="badge">0</span></button>
+            </div>
+
+            <!-- 查询条件区域 -->
+            <div class="search-section">
+                <div class="search-grid">
+                    <div class="search-item">
+                        <label>国内SKU：</label>
+                        <textarea id="domestic-sku" placeholder="请输入国内SKU，多个请回车换行分隔"></textarea>
+                    </div>
+                    <div class="search-item">
+                        <label>国际SKU：</label>
+                        <textarea id="international-sku" placeholder="请输入国际SKU，多个请回车换行分隔"></textarea>
+                    </div>
+                    <div class="search-item">
+                        <label>海关编码：</label>
+                        <textarea id="hscode" placeholder="请输入海关编码，多个请回车换行分隔"></textarea>
+                    </div>
+                    <div class="search-item">
+                        <label>商品标题：</label>
+                        <input type="text" id="product-title" placeholder="请输入商品标题进行模糊搜索">
+                    </div>
+                    <div class="search-item">
+                        <label>数据来源：</label>
+                        <select id="data-source">
+                            <option value="">请选择</option>
+                            <option value="excel">Excel导入</option>
+                            <option value="wimp">WIMP</option>
+                        </select>
+                    </div>
+                    <div class="search-item">
+                        <label>关务评估状态：</label>
+                        <select id="customs-status">
+                            <option value="">请选择</option>
+                            <option value="pending-submit">待提交</option>
+                            <option value="pending-confirm">待确认</option>
+                            <option value="confirmed">已确认</option>
+                        </select>
+                    </div>
+                    <div class="search-item">
+                        <label>服务商：</label>
+                        <select id="service-provider">
+                            <option value="">请选择</option>
+                            <option value="keju">科橘</option>
+                            <option value="liexin">猎芯</option>
+                        </select>
+                    </div>
+                    <div class="search-item">
+                        <label>强制性认证评估状态：</label>
+                        <select id="cert-status">
+                            <option value="">请选择</option>
+                            <option value="pending-submit">待提交</option>
+                            <option value="submitted">已提交</option>
+                        </select>
+                    </div>
+                    <div class="search-item">
+                        <label>商品评估状态：</label>
+                        <select id="product-status">
+                            <option value="">请选择</option>
+                            <option value="inactive">未生效</option>
+                            <option value="active">已生效</option>
+                        </select>
+                    </div>
+                    <div class="search-item">
+                        <label>是否产生订单：</label>
+                        <select id="has-order">
+                            <option value="">请选择</option>
+                            <option value="yes">是</option>
+                            <option value="no">否</option>
+                        </select>
+                    </div>
+                    <div class="search-item">
+                        <label>创建人ERP：</label>
+                        <input type="text" id="creator-erp" placeholder="请输入创建人ERP">
+                    </div>
+                    <div class="search-item">
+                        <label>创建时间：</label>
+                        <div class="date-range">
+                            <input type="date" id="create-start-date">
+                            <span>至</span>
+                            <input type="date" id="create-end-date">
+                        </div>
+                    </div>
+                    <div class="search-item">
+                        <label>评估截止时间：</label>
+                        <div class="date-range">
+                            <input type="date" id="deadline-start-date">
+                            <span>至</span>
+                            <input type="date" id="deadline-end-date">
+                        </div>
+                    </div>
+                    <div class="search-item">
+                        <label>最后更新人ERP：</label>
+                        <input type="text" id="updater-erp" placeholder="请输入最后更新人ERP">
+                    </div>
+                    <div class="search-item">
+                        <label>最后更新时间：</label>
+                        <div class="date-range">
+                            <input type="date" id="update-start-date">
+                            <span>至</span>
+                            <input type="date" id="update-end-date">
+                        </div>
+                    </div>
+                </div>
+                <div class="search-buttons">
+                    <button class="btn btn-primary" onclick="searchProducts()">查询</button>
+                    <button class="btn btn-secondary" onclick="resetSearch()">重置</button>
+                </div>
+            </div>
+
+            <!-- 国家选择标签 -->
+            <div class="country-tabs">
+                <button class="tab-btn active" data-country="china">中国</button>
+                <button class="tab-btn" data-country="brazil">巴西</button>
+                <button class="tab-btn" data-country="thailand">泰国</button>
+                <button class="tab-btn" data-country="vietnam">越南</button>
+                <button class="tab-btn" data-country="malaysia">马来</button>
+                <button class="tab-btn" data-country="indonesia">印尼</button>
+                <button class="tab-btn" data-country="hungary">匈牙利</button>
+            </div>
+
+            <!-- 操作按钮区域 -->
+            <div class="action-section">
+                <button class="btn btn-info" onclick="exportData()">导出</button>
+                <button class="btn btn-success" onclick="importProducts()">导入商品</button>
+                <button class="btn btn-success" onclick="importCustomsEvaluation()">导入关务评估</button>
+                <button class="btn btn-warning" onclick="customsEvaluation()">关务评估</button>
+                <button class="btn btn-warning" onclick="assignServiceProvider()">分配服务商</button>
+                <button class="btn btn-warning" onclick="customsConfirm()">关务确认</button>
+                <button class="btn btn-warning" onclick="certificationEvaluation()">认证评估</button>
+            </div>
+
+            <!-- 数据表格容器 -->
+            <div class="table-container">
+                <div class="table-wrapper">
+                    <table id="customs-product-table" class="data-table">
+                        <thead id="table-header">
+                            <!-- 表头将根据选择的国家动态生成 -->
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- 表格数据将根据选择的国家动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination">
+                <button class="btn btn-sm" onclick="prevPage()" id="prev-btn">上一页</button>
+                <span id="page-info">第1页，共1页</span>
+                <div class="page-jump">
+                    <span>跳至</span>
+                    <input type="number" id="page-input" min="1" style="width: 50px; height: 24px; text-align: center; border: 1px solid #ddd; border-radius: 4px; margin: 0 5px;">
+                    <span>页</span>
+                    <button class="btn btn-sm" onclick="jumpToPage()">跳转</button>
+                </div>
+                <button class="btn btn-sm" onclick="nextPage()" id="next-btn">下一页</button>
+                <div class="page-size-info">
+                    <span>共 <span id="total-records">0</span> 条，每页显示 20 条</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="customs-product.js"></script>
+</body>
+</html>

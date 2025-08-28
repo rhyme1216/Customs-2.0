@@ -1,0 +1,2055 @@
+// 关务商品管理页面JavaScript功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化页面
+    initializePage();
+});
+
+// 全局变量
+let currentPage = 1;
+let totalPages = 1;
+let totalRecords = 0;
+let pageSize = 20;
+let currentCountry = 'china';
+let currentStatus = 'all';
+let searchParams = {};
+
+// 全局数据存储 - 解决数据持久化问题
+let globalDataStore = {};
+
+// 折叠/展开查询表单功能
+function toggleSearchForm() {
+    console.log('toggleSearchForm 函数被调用');
+    
+    const searchForm = document.querySelector('.search-form');
+    const toggleText = document.getElementById('toggle-text');
+    const toggleIcon = document.getElementById('toggle-icon');
+    
+    console.log('searchForm:', searchForm);
+    console.log('toggleText:', toggleText);
+    console.log('toggleIcon:', toggleIcon);
+    
+    if (searchForm && toggleText && toggleIcon) {
+        searchForm.classList.toggle('collapsed');
+        
+        console.log('collapsed class added:', searchForm.classList.contains('collapsed'));
+        
+        if (searchForm.classList.contains('collapsed')) {
+            toggleText.textContent = '展开';
+            toggleIcon.textContent = '▼';
+            console.log('设置为展开状态');
+        } else {
+            toggleText.textContent = '收起';
+            toggleIcon.textContent = '▲';
+            console.log('设置为收起状态');
+        }
+    } else {
+        console.log('未找到必要的DOM元素');
+    }
+}
+
+// 生成操作按钮
+function generateActionButtons(row) {
+    const buttons = [];
+    
+    // 根据状态决定显示哪些按钮
+    const customsStatus = row.customsStatus;
+    const certStatus = row.certStatus;
+    const productStatus = row.productStatus;
+    
+    // 关务评估按钮逻辑
+    if (customsStatus === 'pending-submit') {
+        // 待提交状态：显示关务评估按钮
+        buttons.push(`<a href="javascript:void(0)" class="action-btn customs-btn" onclick="performCustomsEvaluation(getCurrentRowData('${row.domesticSku}'))">关务评估</a>`);
+    } else if (customsStatus === 'confirmed') {
+        // 已确认状态：可以重新评估，需要填写调整原因
+        buttons.push(`<a href="javascript:void(0)" class="action-btn customs-btn" onclick="performCustomsEvaluation(getCurrentRowData('${row.domesticSku}'))">重新关务评估</a>`);
+    }
+    
+    // 关务确认按钮（只有在关务评估状态为待确认时显示）
+    if (customsStatus === 'pending-confirm') {
+        buttons.push(`<a href="javascript:void(0)" class="action-btn confirm-btn" onclick="performCustomsConfirmation(getCurrentRowData('${row.domesticSku}'))">关务确认</a>`);
+    }
+    
+    // 认证评估按钮逻辑
+    if (certStatus === 'pending-submit') {
+        buttons.push(`<a href="javascript:void(0)" class="action-btn cert-btn" onclick="performCertEvaluation(getCurrentRowData('${row.domesticSku}'))">认证评估</a>`);
+    } else if (certStatus === 'submitted') {
+        // 已提交状态：可以重新评估，需要填写调整原因
+        buttons.push(`<a href="javascript:void(0)" class="action-btn cert-btn" onclick="performCertEvaluation(getCurrentRowData('${row.domesticSku}'))">重新认证评估</a>`);
+    }
+    
+    // 分配服务商按钮
+    buttons.push(`<a href="javascript:void(0)" class="action-btn assign-btn" onclick="performAssignProvider('${row.domesticSku}')">分配服务商</a>`);
+    
+    // 详情按钮
+    buttons.push(`<a href="javascript:void(0)" class="action-btn detail-btn" onclick="viewProductDetail('${row.domesticSku}')">详情</a>`);
+    
+    // 删除按钮
+    buttons.push(`<a href="javascript:void(0)" class="action-btn delete-btn" onclick="deleteProduct('${row.domesticSku}')">删除</a>`);
+    
+    // 将按钮分成两行，每行最多3个按钮
+    const firstRow = buttons.slice(0, 3);
+    const secondRow = buttons.slice(3);
+    
+    let html = '<div class="action-buttons">';
+    if (firstRow.length > 0) {
+        html += '<div class="action-row">' + firstRow.join('') + '</div>';
+    }
+    if (secondRow.length > 0) {
+        html += '<div class="action-row">' + secondRow.join('') + '</div>';
+    }
+    html += '</div>';
+    
+    return html;
+}
+
+// 渲染表格数据
+function renderTableData(response) {
+    const tableBody = document.getElementById('table-body');
+    const headers = countryTableHeaders[currentCountry] || countryTableHeaders.china;
+    
+    if (!response.data || response.data.length === 0) {
+        // 显示空数据状态
+        tableBody.innerHTML = `
+            <tr class="empty-row">
+                <td colspan="${headers.length}" class="empty-message">
+                    <div class="empty-content">
+                        <div class="empty-icon">📦</div>
+                        <div class="empty-text">暂无数据</div>
+                        <div class="empty-desc">请调整查询条件后重新搜索</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        // 更新统计信息
+        totalRecords = 0;
+        totalPages = 1;
+        currentPage = 1;
+        return;
+    }
+    
+    // 渲染数据行
+    let bodyHtml = '';
+    response.data.forEach(row => {
+        bodyHtml += '<tr>';
+        headers.forEach(header => {
+            let classes = [];
+            let cellContent = row[header.key] || '';
+            
+            if (header.fixed) {
+                classes.push('fixed-column');
+                if (header.checkbox) {
+                    classes.push('checkbox-column');
+                } else if (header.fixed === 'left') {
+                    classes.push('sku-column');
+                } else if (header.fixed === 'right') {
+                    classes.push('action-column');
+                }
+            }
+            if (header.numeric) {
+                classes.push('numeric');
+            }
+            
+            // 特殊处理某些列的显示
+            if (header.checkbox) {
+                cellContent = `<input type="checkbox" class="row-checkbox" value="${row.domesticSku}">`;
+            } else if (header.key === 'actions') {
+                cellContent = generateActionButtons(row);
+            } else if (header.key === 'isControlled') {
+                cellContent = cellContent === '是' ?
+                    '<span class="control-status control-yes">是</span>' :
+                    '<span class="control-status control-no">否</span>';
+            } else if (header.key === 'hasOrder') {
+                // 处理"是否产生订单"字段的中文显示
+                if (cellContent === '是') {
+                    cellContent = '<span class="order-status order-yes">是</span>';
+                } else if (cellContent === '否') {
+                    cellContent = '<span class="order-status order-no">否</span>';
+                } else {
+                    cellContent = '<span class="order-status order-unknown">-</span>';
+                }
+            } else if (header.key.includes('Status')) {
+                cellContent = `<span class="status-badge status-${cellContent}">${getStatusText(cellContent)}</span>`;
+            }
+            
+            bodyHtml += `<td class="${classes.join(' ')}">${cellContent}</td>`;
+        });
+        bodyHtml += '</tr>';
+    });
+    
+    tableBody.innerHTML = bodyHtml;
+    
+    // 更新统计信息
+    totalRecords = response.total;
+    totalPages = Math.ceil(totalRecords / pageSize);
+    currentPage = response.page;
+}
+
+// 获取状态文本
+function getStatusText(status) {
+    const statusMap = {
+        // 关务评估状态
+        'pending-submit': '待提交',
+        'pending-confirm': '待确认',
+        'confirmed': '已确认',
+        
+        // 认证评估状态
+        'pending': '待提交',
+        'submitted': '已提交',
+        
+        // 商品评估状态
+        'active': '已生效',
+        'inactive': '未生效',
+        'pending': '待生效',
+        
+        // 其他状态
+        'processing': '处理中',
+        'rejected': '已拒绝'
+    };
+    return statusMap[status] || status;
+}
+
+// 商品评估状态联动逻辑
+function updateProductStatus(row) {
+    const customsStatus = row.customsStatus;
+    const certStatus = row.certStatus;
+    
+    // 商品评估状态联动规则：所有国家都需要关务评估状态为已确认 且 认证评估状态为已提交
+    if (customsStatus === 'confirmed' && certStatus === 'submitted') {
+        return 'active'; // 已生效
+    }
+    
+    return 'inactive'; // 未生效
+}
+
+// 检查是否可以进行商品评估状态更新
+function canUpdateProductStatus(customsStatus, certStatus, country) {
+    // 所有国家都需要关务评估状态为已确认 且 认证评估状态为已提交
+    return customsStatus === 'confirmed' && certStatus === 'submitted';
+}
+
+// 状态流转操作函数
+function performCustomsEvaluation(row) {
+    console.log('执行关务评估操作，商品SKU:', row.domesticSku);
+    
+    if (row.customsStatus === 'pending-submit') {
+        // 初次关务评估：待提交 -> 待确认
+        row.customsStatus = 'pending-confirm';
+        console.log('关务评估已提交，状态变更为待确认');
+    } else if (row.customsStatus === 'confirmed') {
+        // 重新关务评估：已确认 -> 已确认（需要填写调整原因）
+        const reason = prompt('请填写调整原因：');
+        if (reason && reason.trim()) {
+            row.adjustmentReason = reason.trim();
+            // 直接触发商品评估状态生效
+            row.productStatus = updateProductStatus(row);
+            console.log('重新关务评估完成，商品评估状态已更新');
+        } else {
+            console.log('未填写调整原因，操作取消');
+            return;
+        }
+    }
+    
+    // 重新渲染当前数据
+    switchCountryTab(currentCountry);
+}
+
+function performCustomsConfirmation(row) {
+    console.log('执行关务确认操作，商品SKU:', row.domesticSku);
+    
+    if (row.customsStatus === 'pending-confirm') {
+        // 关务确认：待确认 -> 已确认
+        row.customsStatus = 'confirmed';
+        
+        // 更新商品评估状态
+        row.productStatus = updateProductStatus(row);
+        
+        console.log('关务确认完成，商品评估状态已更新');
+        
+        // 重新渲染当前数据
+        switchCountryTab(currentCountry);
+    }
+}
+
+function performCertEvaluation(row) {
+    console.log('执行认证评估操作，商品SKU:', row.domesticSku);
+    
+    if (row.certStatus === 'pending-submit') {
+        // 初次认证评估：待提交 -> 已提交
+        row.certStatus = 'submitted';
+        console.log('认证评估已提交');
+    } else if (row.certStatus === 'submitted') {
+        // 重新认证评估：需要填写调整原因
+        const reason = prompt('请填写调整原因：');
+        if (reason && reason.trim()) {
+            row.adjustmentReason = reason.trim();
+            console.log('重新认证评估完成');
+        } else {
+            console.log('未填写调整原因，操作取消');
+            return;
+        }
+    }
+    
+    // 更新商品评估状态
+    row.productStatus = updateProductStatus(row);
+    
+    // 重新渲染当前数据
+    switchCountryTab(currentCountry);
+}
+
+// 获取指定SKU的行数据
+function getCurrentRowData(domesticSku) {
+    const currentData = staticMockData[currentCountry];
+    return currentData.find(row => row.domesticSku === domesticSku);
+}
+// 国家TAB切换功能
+// 切换国家TAB - 简化版本使用静态数据
+function switchCountryTab(country) {
+    console.log('switchCountryTab called with country:', country);
+    currentCountry = country;
+    console.log('currentCountry updated to:', currentCountry);
+    setActiveCountryTab(country);
+    
+    // 更新表格头部
+    const tableHeader = document.getElementById('table-header');
+    if (tableHeader) {
+        const headers = countryTableHeaders[currentCountry] || countryTableHeaders.china;
+        
+        let headerHtml = '<tr>';
+        headers.forEach(header => {
+            let classes = [];
+            if (header.fixed) {
+                classes.push('fixed-column');
+                if (header.checkbox) {
+                    classes.push('checkbox-column');
+                } else if (header.fixed === 'left') {
+                    classes.push('sku-column');
+                } else if (header.fixed === 'right') {
+                    classes.push('action-column');
+                }
+            }
+            if (header.numeric) {
+                classes.push('numeric');
+            }
+            
+            // 特殊处理复选框列
+            if (header.checkbox) {
+                headerHtml += `<th class="${classes.join(' ')}">
+                    <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)">
+                </th>`;
+            } else {
+                headerHtml += `<th class="${classes.join(' ')}">${header.title}</th>`;
+            }
+        });
+        headerHtml += '</tr>';
+        
+        tableHeader.innerHTML = headerHtml;
+    }
+    
+    // 直接获取静态数据并渲染
+    let data = staticMockData[country] || [];
+    
+    // 根据查询条件过滤数据
+    if (searchParams && Object.keys(searchParams).length > 0) {
+        data = data.filter(item => {
+            for (let key in searchParams) {
+                if (searchParams[key] && searchParams[key] !== '') {
+                    const itemValue = String(item[key] || '').toLowerCase();
+                    const searchValue = String(searchParams[key]).toLowerCase();
+                    if (!itemValue.includes(searchValue)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
+    }
+    
+    // 根据状态TAB过滤数据
+    if (currentStatus !== 'all') {
+        data = data.filter(item => {
+            switch (currentStatus) {
+                case 'pending-submit':
+                    return item.customsStatus === 'pending-submit';
+                case 'pending-confirm':
+                    return item.customsStatus === 'pending-confirm';
+                case 'confirmed':
+                    return item.customsStatus === 'confirmed';
+                case 'cert-pending':
+                    return item.certStatus === 'pending-submit';
+                case 'element-pending':
+                    return item.hasOrder === '是' && item.elementStatus === 'pending';
+                default:
+                    return true;
+            }
+        });
+    }
+    
+    const total = data.length;
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const pageData = data.slice(startIndex, endIndex);
+    
+    const mockData = {
+        data: pageData,
+        total: total,
+        page: currentPage,
+        pageSize: pageSize
+    };
+    
+    renderTableData(mockData);
+    updatePagination();
+}
+
+
+
+// 根据搜索参数过滤数据
+function filterDataBySearchParams(data, params) {
+    if (!params || Object.keys(params).length === 0) {
+        return data;
+    }
+    
+    return data.filter(item => {
+        for (let key in params) {
+            if (params[key] && item[key]) {
+                if (item[key].toString().toLowerCase().indexOf(params[key].toLowerCase()) === -1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    });
+}
+
+// 根据状态过滤数据
+function filterDataByStatus(data, status) {
+    if (!status || status === 'all') {
+        return data;
+    }
+    
+    return data.filter(item => {
+        if (status === 'pending') {
+            return item.status === '待审核' || item.status === 'Pending Review';
+        } else if (status === 'approved') {
+            return item.status === '已通过' || item.status === 'Approved';
+        } else if (status === 'rejected') {
+            return item.status === '已拒绝' || item.status === 'Rejected';
+        }
+        return true;
+    });
+}
+
+// 设置活跃国家TAB
+function setActiveCountryTab(country) {
+    const countryTabs = document.querySelectorAll('.tab-btn');
+    countryTabs.forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.getAttribute('data-country') === country) {
+            tab.classList.add('active');
+        }
+    });
+}
+// Select placeholder功能
+function initSelectPlaceholders() {
+    const selects = document.querySelectorAll('select[data-placeholder]');
+    
+    selects.forEach(select => {
+        const placeholder = select.getAttribute('data-placeholder');
+        
+        // 确保select没有选中任何值
+        select.value = '';
+        
+        // 设置placeholder样式和文本显示
+        function updatePlaceholderDisplay() {
+            if (select.value === '') {
+                // 显示placeholder样式
+                select.style.color = '#999';
+                select.setAttribute('data-showing-placeholder', 'true');
+            } else {
+                // 显示正常选中值样式
+                select.style.color = '#333';
+                select.removeAttribute('data-showing-placeholder');
+            }
+        }
+        
+        // 监听变化事件
+        select.addEventListener('change', updatePlaceholderDisplay);
+        select.addEventListener('focus', function() {
+            if (this.value === '') {
+                this.style.color = '#666'; // 焦点时稍微深一点的颜色
+            }
+        });
+        select.addEventListener('blur', updatePlaceholderDisplay);
+        
+        // 初始化显示
+        updatePlaceholderDisplay();
+        
+        // 添加CSS类用于样式控制
+        select.classList.add('select-with-placeholder');
+    });
+}
+
+// 显示所有表单组件
+function showAllFormGroups() {
+    const allGroups = document.querySelectorAll('.search-form .form-group');
+    allGroups.forEach(group => {
+        if (group) {
+            group.style.display = '';
+        }
+    });
+}
+
+// 隐藏表单组件
+function hideFormGroup(group) {
+    if (group) {
+        group.style.display = 'none';
+    }
+}
+
+// 更新select选项
+function updateSelectOptions(select, options) {
+    if (!select) return;
+    
+    // 保存placeholder选项
+    const placeholderOption = select.querySelector('option[value=""]');
+    
+    // 清空所有选项
+    select.innerHTML = '';
+    
+    // 重新添加placeholder
+    if (placeholderOption) {
+        select.appendChild(placeholderOption);
+    }
+    
+    // 添加新选项
+    options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option.value;
+        optionElement.textContent = option.text;
+        select.appendChild(optionElement);
+    });
+}
+
+// 恢复所有select选项
+function restoreAllSelectOptions() {
+    // 恢复关务评估状态选项
+    const customsStatusSelect = document.getElementById('customs-status');
+    if (customsStatusSelect) {
+        updateSelectOptions(customsStatusSelect, [
+            {value: 'pending-submit', text: '待提交'},
+            {value: 'pending-confirm', text: '待确认'},
+            {value: 'confirmed', text: '已确认'}
+        ]);
+    }
+    
+    // 恢复强制性认证评估状态选项
+    const certStatusSelect = document.getElementById('cert-status');
+    if (certStatusSelect) {
+        updateSelectOptions(certStatusSelect, [
+            {value: 'pending-submit', text: '待提交'},
+            {value: 'submitted', text: '已提交'}
+        ]);
+    }
+    
+    // 恢复是否产生订单选项
+    const hasOrderSelect = document.getElementById('has-order');
+    if (hasOrderSelect) {
+        updateSelectOptions(hasOrderSelect, [
+            {value: 'yes', text: '是'},
+            {value: 'no', text: '否'}
+        ]);
+    }
+}
+
+// 触发状态TAB联动逻辑
+function triggerStatusTabLinkage(status) {
+    // 获取所有查询表单组件（使用更兼容的方法）
+    const dataSourceGroup = document.getElementById('data-source');
+    const customsStatusGroup = document.getElementById('customs-status')?.closest('.form-group');
+    const serviceProviderGroup = document.getElementById('service-provider')?.closest('.form-group');
+    const certStatusGroup = document.getElementById('cert-status')?.closest('.form-group');
+    const productStatusGroup = document.getElementById('product-status');
+    const hasOrderGroup = document.getElementById('has-order')?.closest('.form-group');
+    const deadlineGroup = document.getElementById('deadline-start')?.closest('.form-group');
+    
+    // 先显示所有组件并恢复选项
+    showAllFormGroups();
+    restoreAllSelectOptions();
+    
+    // 根据状态显示/隐藏组件并限制选项
+    switch(status) {
+        case 'customs-pending':
+            // 关务未评估：只显示关务评估状态，限制选项为待提交和待确认
+            hideFormGroup(certStatusGroup);
+            hideFormGroup(hasOrderGroup);
+            if (document.getElementById('customs-status')) {
+                updateSelectOptions(document.getElementById('customs-status'), [
+                    {value: 'pending-submit', text: '待提交'},
+                    {value: 'pending-confirm', text: '待确认'}
+                ]);
+            }
+            break;
+        case 'cert-pending':
+            // 认证未评估：只显示强制性认证评估状态，限制选项为待提交
+            hideFormGroup(customsStatusGroup);
+            hideFormGroup(serviceProviderGroup);
+            hideFormGroup(hasOrderGroup);
+            if (document.getElementById('cert-status')) {
+                updateSelectOptions(document.getElementById('cert-status'), [
+                    {value: 'pending-submit', text: '待提交'}
+                ]);
+            }
+            break;
+        case 'element-pending':
+            // 要素未确认：只显示是否产生订单，限制选项为是
+            hideFormGroup(customsStatusGroup);
+            hideFormGroup(certStatusGroup);
+            hideFormGroup(serviceProviderGroup);
+            hideFormGroup(deadlineGroup);
+            if (document.getElementById('has-order')) {
+                updateSelectOptions(document.getElementById('has-order'), [
+                    {value: 'yes', text: '是'}
+                ]);
+            }
+            break;
+        default:
+            // 全部：显示所有组件和选项
+            break;
+    }
+}
+
+// 静态模拟数据 - 使用data-simplified.js生成
+// 注意：data-simplified.js会在window对象上导出staticMockData和tableColumns
+const staticMockData = window.staticMockData || {
+    china: [],
+    thailand: [],
+    vietnam: [],
+    malaysia: [],
+    indonesia: [],
+    hungary: [],
+    brazil: []
+};
+// 模拟数据 - 不同国家的表头配置
+const countryTableHeaders = window.tableColumns || {};
+
+function initSelectPlaceholders() {
+    const selects = document.querySelectorAll('select[data-placeholder]');
+    
+    selects.forEach(select => {
+        const placeholder = select.getAttribute('data-placeholder');
+        
+        // 确保select没有选中任何值
+        select.value = '';
+        
+        // 设置placeholder样式和文本显示
+        function updatePlaceholderDisplay() {
+            if (select.value === '') {
+                // 显示placeholder样式
+                select.style.color = '#999';
+                select.setAttribute('data-showing-placeholder', 'true');
+            } else {
+                // 显示正常选中值样式
+                select.style.color = '#333';
+                select.removeAttribute('data-showing-placeholder');
+            }
+        }
+        
+        // 监听变化事件
+        select.addEventListener('change', updatePlaceholderDisplay);
+        select.addEventListener('focus', function() {
+            if (this.value === '') {
+                this.style.color = '#666'; // 焦点时稍微深一点的颜色
+            }
+        });
+        select.addEventListener('blur', updatePlaceholderDisplay);
+        
+        // 初始化显示
+        updatePlaceholderDisplay();
+        
+        // 添加CSS类用于样式控制
+        select.classList.add('select-with-placeholder');
+    });
+}
+
+// 显示所有表单组件
+function showAllFormGroups() {
+    const allGroups = document.querySelectorAll('.search-form .form-group');
+    allGroups.forEach(group => {
+        if (group) {
+            group.style.display = '';
+        }
+    });
+}
+
+// 隐藏表单组件
+function hideFormGroup(group) {
+    if (group) {
+        group.style.display = 'none';
+    }
+}
+
+// 更新select选项
+function updateSelectOptions(select, options) {
+    if (!select) return;
+    
+    // 保存placeholder选项
+    const placeholderOption = select.querySelector('option[value=""]');
+    
+    // 清空所有选项
+    select.innerHTML = '';
+    
+    // 重新添加placeholder
+    if (placeholderOption) {
+        select.appendChild(placeholderOption);
+    }
+    
+    // 添加新选项
+    options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option.value;
+        optionElement.textContent = option.text;
+        select.appendChild(optionElement);
+    });
+}
+
+// 恢复所有select选项
+function restoreAllSelectOptions() {
+    // 恢复关务评估状态选项
+    const customsStatusSelect = document.getElementById('customs-status');
+    if (customsStatusSelect) {
+        updateSelectOptions(customsStatusSelect, [
+            {value: 'pending-submit', text: '待提交'},
+            {value: 'pending-confirm', text: '待确认'},
+            {value: 'confirmed', text: '已确认'}
+        ]);
+    }
+    
+    // 恢复强制性认证评估状态选项
+    const certStatusSelect = document.getElementById('cert-status');
+    if (certStatusSelect) {
+        updateSelectOptions(certStatusSelect, [
+            {value: 'pending-submit', text: '待提交'},
+            {value: 'submitted', text: '已提交'}
+        ]);
+    }
+    
+    // 恢复是否产生订单选项
+    const hasOrderSelect = document.getElementById('has-order');
+    if (hasOrderSelect) {
+        updateSelectOptions(hasOrderSelect, [
+            {value: 'yes', text: '是'},
+            {value: 'no', text: '否'}
+        ]);
+    }
+}
+
+// 触发状态TAB联动逻辑
+function triggerStatusTabLinkage(status) {
+    // 获取所有查询表单组件（使用更兼容的方法）
+    const dataSourceGroup = document.getElementById('data-source');
+    const customsStatusGroup = document.getElementById('customs-status')?.closest('.form-group');
+    const serviceProviderGroup = document.getElementById('service-provider')?.closest('.form-group');
+    const certStatusGroup = document.getElementById('cert-status')?.closest('.form-group');
+    const productStatusGroup = document.getElementById('product-status');
+    const hasOrderGroup = document.getElementById('has-order')?.closest('.form-group');
+    const deadlineGroup = document.getElementById('deadline-start')?.closest('.form-group');
+    
+    // 先显示所有组件并恢复选项
+    showAllFormGroups();
+    restoreAllSelectOptions();
+    
+    // 根据状态显示/隐藏组件并限制选项
+    switch(status) {
+        case 'customs-pending':
+            // 关务未评估：只显示关务评估状态，限制选项为待提交和待确认
+            hideFormGroup(certStatusGroup);
+            hideFormGroup(hasOrderGroup);
+            if (document.getElementById('customs-status')) {
+                updateSelectOptions(document.getElementById('customs-status'), [
+                    {value: 'pending-submit', text: '待提交'},
+                    {value: 'pending-confirm', text: '待确认'}
+                ]);
+            }
+            break;
+        case 'cert-pending':
+            // 认证未评估：只显示强制性认证评估状态，限制选项为待提交
+            hideFormGroup(customsStatusGroup);
+            hideFormGroup(serviceProviderGroup);
+            hideFormGroup(hasOrderGroup);
+            if (document.getElementById('cert-status')) {
+                updateSelectOptions(document.getElementById('cert-status'), [
+                    {value: 'pending-submit', text: '待提交'}
+                ]);
+            }
+            break;
+        case 'element-pending':
+            // 要素未确认：只显示是否产生订单，限制选项为是
+            hideFormGroup(customsStatusGroup);
+            hideFormGroup(certStatusGroup);
+            hideFormGroup(serviceProviderGroup);
+            hideFormGroup(deadlineGroup);
+            if (document.getElementById('has-order')) {
+                updateSelectOptions(document.getElementById('has-order'), [
+                    {value: 'yes', text: '是'}
+                ]);
+            }
+            break;
+        default:
+            // 全部：显示所有组件和选项
+            break;
+    }
+}
+
+// 静态模拟数据 - 使用data-simplified.js生成
+// 注意：data-simplified.js会在window对象上导出staticMockData和tableColumns
+const staticMockData = window.staticMockData || {
+    china: [],
+    thailand: [],
+    vietnam: [],
+    malaysia: [],
+    indonesia: [],
+    hungary: [],
+    brazil: []
+};
+
+// 模拟数据 - 不同国家的表头配置
+const countryTableHeaders = {
+    china: [
+        { key: 'checkbox', title: '', fixed: 'left', width: 50, checkbox: true },
+        { key: 'domesticSku', title: '国内SKU', fixed: 'left', width: 120 },
+        { key: 'internationalSku', title: '国际SKU', width: 120 },
+        { key: 'productName', title: '商品中文名称', width: 200 },
+        { key: 'hscode', title: 'HS Code', width: 120 },
+        { key: 'exportTaxRate', title: '出口退税率%', width: 100, numeric: true },
+        { key: 'exportTariffRate', title: '出口关税税率%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 80 },
+        { key: 'controlInfo', title: '管制信息', width: 150 },
+        { key: 'declarationElements', title: '申报要素', width: 200 },
+        { key: 'declarationNameCn', title: '申报品中文名', width: 150 },
+        { key: 'declarationNameEn', title: '申报品英文名', width: 150 },
+        { key: 'serviceProvider', title: '评估服务商', width: 100 },
+        { key: 'dataSource', title: '数据来源', width: 100 },
+        { key: 'salesErp', title: '采销ERP', width: 100 },
+        { key: 'deadline', title: '评估截止时间', width: 120 },
+        { key: 'customsStatus', title: '关务评估状态', width: 120 },
+        { key: 'certStatus', title: '强制性认证状态', width: 140 },
+        { key: 'productStatus', title: '商品评估状态', width: 120 },
+        { key: 'hasOrder', title: '是否产生订单', width: 100 },
+        { key: 'elementStatus', title: '要素状态', width: 100 },
+        { key: 'creator', title: '创建人', width: 100 },
+        { key: 'salesNote', title: '采销备注', width: 150 },
+        { key: 'createTime', title: '创建时间', width: 120 },
+        { key: 'updater', title: '更新人', width: 100 },
+        { key: 'updateTime', title: '更新时间', width: 120 },
+        { key: 'actions', title: '操作', fixed: 'right', width: 80 }
+    ],
+    thailand: [
+        { key: 'checkbox', title: '', fixed: 'left', width: 50, checkbox: true },
+        { key: 'domesticSku', title: '国内SKU', fixed: 'left', width: 120 },
+        { key: 'internationalSku', title: '国际SKU', width: 120 },
+        { key: 'productName', title: '商品中文名称', width: 200 },
+        { key: 'hscode', title: '泰国HSCODE', width: 120 },
+        { key: 'mfnRate', title: '最惠国关税MFN', width: 120, numeric: true },
+        { key: 'formE', title: 'Form E%', width: 100, numeric: true },
+        { key: 'vat', title: '增值税VAT%', width: 100, numeric: true },
+        { key: 'exciseTax', title: '消费税率excise tax%', width: 140, numeric: true },
+        { key: 'localTax', title: '本地税Local Tax', width: 120, numeric: true },
+        { key: 'antiDumping', title: '反倾销税率', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 80 },
+        { key: 'controlInfo', title: '管制信息', width: 150 },
+        { key: 'serviceProvider', title: '评估服务商', width: 100 },
+        { key: 'dataSource', title: '数据来源', width: 100 },
+        { key: 'salesErp', title: '采销ERP', width: 100 },
+        { key: 'deadline', title: '评估截止时间', width: 120 },
+        { key: 'customsStatus', title: '关务评估状态', width: 120 },
+        { key: 'certStatus', title: '强制性认证状态', width: 140 },
+        { key: 'productStatus', title: '商品评估状态', width: 120 },
+        { key: 'hasOrder', title: '是否产生订单', width: 100 },
+        { key: 'elementStatus', title: '要素状态', width: 100 },
+        { key: 'creator', title: '创建人', width: 100 },
+        { key: 'salesNote', title: '采销备注', width: 150 },
+        { key: 'createTime', title: '创建时间', width: 120 },
+        { key: 'updater', title: '更新人', width: 100 },
+        { key: 'updateTime', title: '更新时间', width: 120 },
+        { key: 'actions', title: '操作', fixed: 'right', width: 80 }
+    ],
+    vietnam: [
+        { key: 'checkbox', title: '', fixed: 'left', width: 50, checkbox: true },
+        { key: 'domesticSku', title: '国内SKU', fixed: 'left', width: 120 },
+        { key: 'internationalSku', title: '国际SKU', width: 120 },
+        { key: 'productName', title: '商品中文名称', width: 200 },
+        { key: 'hscode', title: '越南HSCODE', width: 120 },
+        { key: 'mfnRate', title: '最惠国关税MFN', width: 120, numeric: true },
+        { key: 'formE', title: 'Form E%', width: 100, numeric: true },
+        { key: 'vat', title: '增值税VAT%', width: 100, numeric: true },
+        { key: 'antiDumping', title: '反倾销税率', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 80 },
+        { key: 'controlInfo', title: '管制信息', width: 150 },
+        { key: 'serviceProvider', title: '评估服务商', width: 100 },
+        { key: 'dataSource', title: '数据来源', width: 100 },
+        { key: 'salesErp', title: '采销ERP', width: 100 },
+        { key: 'deadline', title: '评估截止时间', width: 120 },
+        { key: 'customsStatus', title: '关务评估状态', width: 120 },
+        { key: 'certStatus', title: '强制性认证状态', width: 140 },
+        { key: 'productStatus', title: '商品评估状态', width: 120 },
+        { key: 'hasOrder', title: '是否产生订单', width: 100 },
+        { key: 'elementStatus', title: '要素状态', width: 100 },
+        { key: 'creator', title: '创建人', width: 100 },
+        { key: 'salesNote', title: '采销备注', width: 150 },
+        { key: 'createTime', title: '创建时间', width: 120 },
+        { key: 'updater', title: '更新人', width: 100 },
+        { key: 'updateTime', title: '更新时间', width: 120 },
+        { key: 'actions', title: '操作', fixed: 'right', width: 80 }
+    ],
+    malaysia: [
+        { key: 'checkbox', title: '', fixed: 'left', width: 50, checkbox: true },
+        { key: 'domesticSku', title: '国内SKU', fixed: 'left', width: 120 },
+        { key: 'internationalSku', title: '国际SKU', width: 120 },
+        { key: 'productName', title: '商品中文名称', width: 200 },
+        { key: 'hscode', title: '马来HSCODE', width: 120 },
+        { key: 'mfnRate', title: '最惠国关税MFN', width: 120, numeric: true },
+        { key: 'formE', title: 'Form E%', width: 100, numeric: true },
+        { key: 'sst', title: '销售与服务税SST%', width: 120, numeric: true },
+        { key: 'antiDumping', title: '反倾销税率', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 80 },
+        { key: 'controlInfo', title: '管制信息', width: 150 },
+        { key: 'serviceProvider', title: '评估服务商', width: 100 },
+        { key: 'dataSource', title: '数据来源', width: 100 },
+        { key: 'salesErp', title: '采销ERP', width: 100 },
+        { key: 'deadline', title: '评估截止时间', width: 120 },
+        { key: 'customsStatus', title: '关务评估状态', width: 120 },
+        { key: 'certStatus', title: '强制性认证状态', width: 140 },
+        { key: 'productStatus', title: '商品评估状态', width: 120 },
+        { key: 'hasOrder', title: '是否产生订单', width: 100 },
+        { key: 'elementStatus', title: '要素状态', width: 100 },
+        { key: 'creator', title: '创建人', width: 100 },
+        { key: 'salesNote', title: '采销备注', width: 150 },
+        { key: 'createTime', title: '创建时间', width: 120 },
+        { key: 'updater', title: '更新人', width: 100 },
+        { key: 'updateTime', title: '更新时间', width: 120 },
+        { key: 'actions', title: '操作', fixed: 'right', width: 80 }
+    ],
+    indonesia: [
+        { key: 'checkbox', title: '', fixed: 'left', width: 50, checkbox: true },
+        { key: 'domesticSku', title: '国内SKU', fixed: 'left', width: 120 },
+        { key: 'internationalSku', title: '国际SKU', width: 120 },
+        { key: 'productName', title: '商品中文名称', width: 200 },
+        { key: 'hscode', title: '印尼HSCODE', width: 120 },
+        { key: 'formE', title: 'Form E%', width: 100, numeric: true },
+        { key: 'ppn', title: '增值税PPN%', width: 100, numeric: true },
+        { key: 'pph', title: '所得税PPH%', width: 100, numeric: true },
+        { key: 'ppnbm', title: '奢侈品税PPNBM%', width: 120, numeric: true },
+        { key: 'bmt', title: '进口税BMT%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 80 },
+        { key: 'controlInfo', title: '管制信息', width: 150 },
+        { key: 'serviceProvider', title: '评估服务商', width: 100 },
+        { key: 'dataSource', title: '数据来源', width: 100 },
+        { key: 'salesErp', title: '采销ERP', width: 100 },
+        { key: 'deadline', title: '评估截止时间', width: 120 },
+        { key: 'customsStatus', title: '关务评估状态', width: 120 },
+        { key: 'certStatus', title: '强制性认证状态', width: 140 },
+        { key: 'productStatus', title: '商品评估状态', width: 120 },
+        { key: 'hasOrder', title: '是否产生订单', width: 100 },
+        { key: 'elementStatus', title: '要素状态', width: 100 },
+        { key: 'creator', title: '创建人', width: 100 },
+        { key: 'salesNote', title: '采销备注', width: 150 },
+        { key: 'createTime', title: '创建时间', width: 120 },
+        { key: 'updater', title: '更新人', width: 100 },
+        { key: 'updateTime', title: '更新时间', width: 120 },
+        { key: 'actions', title: '操作', fixed: 'right', width: 80 }
+    ],
+    hungary: [
+        { key: 'checkbox', title: '', fixed: 'left', width: 50, checkbox: true },
+        { key: 'domesticSku', title: '国内SKU', fixed: 'left', width: 120 },
+        { key: 'internationalSku', title: '国际SKU', width: 120 },
+        { key: 'productName', title: '商品中文名称', width: 200 },
+        { key: 'hscode', title: '匈牙利HSCODE', width: 120 },
+        { key: 'importDuty', title: '进口关税Import Duty%', width: 140, numeric: true },
+        { key: 'antiDumping', title: '反倾销税率', width: 120, numeric: true },
+        { key: 'countervailing', title: '反补贴税率', width: 120, numeric: true },
+        { key: 'vat', title: '增值税VAT%', width: 100, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 80 },
+        { key: 'controlInfo', title: '管制信息', width: 150 },
+        { key: 'serviceProvider', title: '评估服务商', width: 100 },
+        { key: 'dataSource', title: '数据来源', width: 100 },
+        { key: 'salesErp', title: '采销ERP', width: 100 },
+        { key: 'deadline', title: '评估截止时间', width: 120 },
+        { key: 'customsStatus', title: '关务评估状态', width: 120 },
+        { key: 'certStatus', title: '强制性认证状态', width: 140 },
+        { key: 'productStatus', title: '商品评估状态', width: 120 },
+        { key: 'hasOrder', title: '是否产生订单', width: 100 },
+        { key: 'elementStatus', title: '要素状态', width: 100 },
+        { key: 'creator', title: '创建人', width: 100 },
+        { key: 'salesNote', title: '采销备注', width: 150 },
+        { key: 'createTime', title: '创建时间', width: 120 },
+        { key: 'updater', title: '更新人', width: 100 },
+        { key: 'updateTime', title: '更新时间', width: 120 },
+        { key: 'actions', title: '操作', fixed: 'right', width: 80 }
+    ],
+    brazil: [
+        { key: 'checkbox', title: '', fixed: 'left', width: 50, checkbox: true },
+        { key: 'domesticSku', title: '国内SKU', fixed: 'left', width: 120 },
+        { key: 'internationalSku', title: '国际SKU', width: 120 },
+        { key: 'productName', title: '商品中文名称', width: 200 },
+        { key: 'hscode', title: '巴西HSCODE', width: 120 },
+        { key: 'ii', title: '进口税II%', width: 100, numeric: true },
+        { key: 'ipi', title: '工业产品税IPI%', width: 120, numeric: true },
+        { key: 'pis', title: '社会一体化税PIS%', width: 140, numeric: true },
+        { key: 'confins', title: '社会保障融资税COFINS%', width: 160, numeric: true },
+        { key: 'icms', title: '商品流通税ICMS%', width: 120, numeric: true },
+        { key: 'antiDumping', title: '反倾销税率', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 80 },
+        { key: 'controlInfo', title: '管制信息', width: 150 },
+        { key: 'serviceProvider', title: '评估服务商', width: 100 },
+        { key: 'dataSource', title: '数据来源', width: 100 },
+        { key: 'salesErp', title: '采销ERP', width: 100 },
+        { key: 'deadline', title: '评估截止时间', width: 120 },
+        { key: 'customsStatus', title: '关务评估状态', width: 120 },
+        { key: 'certStatus', title: '强制性认证状态', width: 140 },
+        { key: 'productStatus', title: '商品评估状态', width: 120 },
+        { key: 'hasOrder', title: '是否产生订单', width: 100 },
+        { key: 'elementStatus', title: '要素状态', width: 100 },
+        { key: 'creator', title: '创建人', width: 100 },
+        { key: 'salesNote', title: '采销备注', width: 150 },
+        { key: 'createTime', title: '创建时间', width: 120 },
+        { key: 'updater', title: '更新人', width: 100 },
+        { key: 'updateTime', title: '更新时间', width: 120 },
+        { key: 'actions', title: '操作', fixed: 'right', width: 80 }
+    ]
+};
+
+// 初始化页面
+function initializePage() {
+    console.log('关务商品管理页面初始化中...');
+    
+    // 初始化select placeholder功能
+    initSelectPlaceholders();
+    
+    // 绑定事件监听器
+    bindEventListeners();
+    
+    // 更新状态TAB的数字徽标
+    updateStatusBadges();
+    
+    // 设置默认的国家和状态
+    setActiveCountryTab(currentCountry);
+    setActiveStatusTab(currentStatus);
+    
+    // 默认加载中国数据
+    switchCountryTab('china');
+    
+    console.log('关务商品管理页面初始化完成');
+}
+
+// 更新状态徽标
+function updateStatusBadges() {
+    // 这里应该从API获取实际的统计数据
+    // 目前使用模拟数据
+    const badges = {
+        'all': 1234,
+        'pending': 156,
+        'processing': 89,
+        'completed': 989
+    };
+    
+    // 更新各个状态TAB的徽标数字
+    Object.keys(badges).forEach(status => {
+        const badge = document.querySelector(`[data-status="${status}"] .badge`);
+        if (badge) {
+            badge.textContent = badges[status];
+        }
+    });
+}
+
+// 绑定事件监听器
+function bindEventListeners() {
+    // 状态TAB点击事件
+    const statusTabs = document.querySelectorAll('.status-tab-btn');
+    console.log('Found status tabs:', statusTabs.length);
+    statusTabs.forEach(tab => {
+        console.log('Binding event to tab:', tab.getAttribute('data-status'));
+        tab.addEventListener('click', function() {
+            console.log('Status tab clicked:', this.getAttribute('data-status'));
+            const status = this.getAttribute('data-status');
+            switchStatusTab(status);
+        });
+    });
+    
+    // 国家TAB点击事件
+    const countryTabs = document.querySelectorAll('.tab-btn');
+    countryTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const country = this.getAttribute('data-country');
+            switchCountryTab(country);
+        });
+    });
+    
+    // 查询表单事件
+    bindSearchFormEvents();
+    
+    // 分页事件
+    bindPaginationEvents();
+    
+    // 展开/收起按钮事件
+// 绑定展开/收起按钮事件
+function bindToggleEvents() {
+    const toggleBtn = document.getElementById('search-toggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            const searchForm = document.querySelector('.search-form');
+            const isCollapsed = searchForm.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                searchForm.classList.remove('collapsed');
+                toggleBtn.innerHTML = '收起 ▲';
+            } else {
+                searchForm.classList.add('collapsed');
+                toggleBtn.innerHTML = '展开 ▼';
+            }
+        });
+    }
+}
+    bindToggleEvents();
+}
+
+// 查询功能
+function searchProducts() {
+    // 收集查询参数
+    searchParams = {
+        domesticSku: document.getElementById('domestic-sku')?.value || '',
+        internationalSku: document.getElementById('international-sku')?.value || '',
+        hscode: document.getElementById('hscode')?.value || '',
+        productTitle: document.getElementById('product-title')?.value || '',
+        dataSource: document.getElementById('data-source-select')?.value || '',
+        customsStatus: document.getElementById('customs-status')?.value || '',
+        serviceProvider: document.getElementById('service-provider')?.value || '',
+        certStatus: document.getElementById('cert-status')?.value || '',
+        productStatus: document.getElementById('product-status-select')?.value || '',
+        hasOrder: document.getElementById('has-order')?.value || '',
+        creatorErp: document.getElementById('creator-erp-input')?.value || '',
+        createTimeStart: document.getElementById('create-time-start-input')?.value || '',
+        createTimeEnd: document.getElementById('create-time-end-input')?.value || '',
+        deadlineStart: document.getElementById('deadline-start')?.value || '',
+        deadlineEnd: document.getElementById('deadline-end')?.value || '',
+        updaterErp: document.getElementById('updater-erp')?.value || '',
+        updateTimeStart: document.getElementById('update-time-start')?.value || '',
+        updateTimeEnd: document.getElementById('update-time-end')?.value || ''
+    };
+    
+    // 重置到第一页
+    currentPage = 1;
+    
+    // 加载数据
+    loadTableData();
+    
+    console.log('执行查询，参数：', searchParams);
+}
+// 重置查询
+function resetSearch() {
+    // 清空所有表单字段
+    const form = document.querySelector('.search-form');
+    if (form) {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        });
+    }
+    
+    // 清空查询参数
+    searchParams = {};
+    
+    // 重置到第一页
+    currentPage = 1;
+    
+    // 重新加载数据
+    loadTableData();
+    
+    console.log('重置查询条件');
+}
+// 绑定查询表单事件
+function bindSearchFormEvents() {
+    // 查询按钮
+    const searchBtn = document.querySelector('.btn-primary');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', searchProducts);
+    }
+    
+    // 重置按钮
+    const resetBtn = document.querySelector('.btn-secondary');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetSearch);
+    }
+    
+    // 回车键查询
+    const searchInputs = document.querySelectorAll('input, select, textarea');
+    searchInputs.forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchProducts();
+            }
+        });
+    });
+}
+
+// 分页函数定义
+function prevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        loadTableData();
+    }
+}
+
+function nextPage() {
+    if (currentPage < totalPages) {
+        currentPage++;
+        loadTableData();
+    }
+}
+
+function jumpToPage() {
+    const pageInput = document.getElementById('page-input');
+    if (pageInput) {
+        const targetPage = parseInt(pageInput.value);
+        if (targetPage >= 1 && targetPage <= totalPages && targetPage !== currentPage) {
+            currentPage = targetPage;
+            loadTableData();
+        }
+    }
+}
+
+// 绑定分页事件
+function bindPaginationEvents() {
+    // 上一页按钮
+    const prevBtn = document.getElementById('prev-btn');
+    if (prevBtn) {
+        prevBtn.addEventListener('click', prevPage);
+    }
+    
+    // 下一页按钮
+    const nextBtn = document.getElementById('next-btn');
+    if (nextBtn) {
+        nextBtn.addEventListener('click', nextPage);
+    }
+    
+    // 跳转按钮
+    const jumpBtn = document.querySelector('.page-jump .btn-sm');
+    if (jumpBtn) {
+        jumpBtn.addEventListener('click', jumpToPage);
+    }
+    
+    // 页码输入框回车事件
+    const pageInput = document.getElementById('page-input');
+    if (pageInput) {
+        pageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                jumpToPage();
+            }
+        });
+    }
+}
+
+// 切换状态TAB
+function switchStatusTab(status) {
+    console.log('switchStatusTab called with status:', status);
+    currentStatus = status;
+    setActiveStatusTab(status);
+    
+    // 根据状态设置查询条件
+    setSearchParamsByStatus(status);
+    
+    // 控制要素状态组件的显示/隐藏
+    toggleElementStatusComponent(status);
+    
+    // 控制表格列的显示/隐藏
+    toggleTableColumns(status);
+    
+    // 触发状态TAB联动逻辑
+    triggerStatusTabLinkage(status);
+    
+    // 延迟调用，确保loadTableData函数已定义
+    setTimeout(() => {
+        if (typeof loadTableData === 'function') {
+            loadTableData();
+        }
+    }, 0);
+}
+
+// 设置活跃状态TAB
+function setActiveStatusTab(status) {
+    const statusTabs = document.querySelectorAll('.status-tab-btn');
+    statusTabs.forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.getAttribute('data-status') === status) {
+            tab.classList.add('active');
+        }
+    });
+}
+
+// 控制要素状态组件的显示/隐藏
+function toggleElementStatusComponent(status) {
+    const elementStatusGroup = document.getElementById('element-status-group');
+    if (elementStatusGroup) {
+        // 仅在"全部"和"要素未确认"tab中显示要素状态组件
+        if (status === 'all' || status === 'element-pending') {
+            elementStatusGroup.style.display = 'block';
+        } else {
+            elementStatusGroup.style.display = 'none';
+        }
+    }
+    
+    // 在"要素未确认"状态下隐藏特定的查询条件组件
+    const componentsToHide = [
+        'data-source',      // 数据来源（form-group的ID）
+        'product-status',   // 商品评估状态（form-group的ID）
+        'creator-erp',      // 创建人ERP（form-group的ID）
+        'create-time-start' // 创建时间（form-group的ID，包含开始和结束时间）
+    ];
+    
+    if (status === 'element-pending') {
+        // 隐藏指定组件（直接通过form-group的ID）
+        componentsToHide.forEach(id => {
+            const formGroup = document.getElementById(id);
+            if (formGroup) {
+                formGroup.style.display = 'none';
+            }
+        });
+    } else {
+        // 显示所有组件（直接通过form-group的ID）
+        componentsToHide.forEach(id => {
+            const formGroup = document.getElementById(id);
+            if (formGroup) {
+                formGroup.style.display = '';
+            }
+        });
+    }
+}
+
+// 控制表格列的显示/隐藏
+function toggleTableColumns(status) {
+    // 需要隐藏的列：数据来源、创建人、创建时间
+    // 根据表头配置，这些列的索引分别是：dataSource(13), creator(21), createTime(23)
+    const columnsToHide = ['dataSource', 'creator', 'createTime'];
+    
+    if (status === 'element-pending') {
+        // 要素未确认状态下隐藏指定列
+        hideTableColumns(columnsToHide);
+    } else {
+        // 其他状态下显示所有列
+        showTableColumns(columnsToHide);
+    }
+}
+
+// 隐藏表格列
+function hideTableColumns(columnKeys) {
+    const headers = countryTableHeaders[currentCountry] || countryTableHeaders.china;
+    
+    columnKeys.forEach(key => {
+        const columnIndex = headers.findIndex(header => header.key === key);
+        if (columnIndex !== -1) {
+            // 隐藏表头
+            const headerCell = document.querySelector(`#table-header th:nth-child(${columnIndex + 1})`);
+            if (headerCell) {
+                headerCell.style.display = 'none';
+            }
+            
+            // 隐藏数据行中对应的列
+            const dataCells = document.querySelectorAll(`#table-body td:nth-child(${columnIndex + 1})`);
+            dataCells.forEach(cell => {
+                cell.style.display = 'none';
+            });
+        }
+    });
+}
+
+// 显示表格列
+function showTableColumns(columnKeys) {
+    const headers = countryTableHeaders[currentCountry] || countryTableHeaders.china;
+    
+    columnKeys.forEach(key => {
+        const columnIndex = headers.findIndex(header => header.key === key);
+        if (columnIndex !== -1) {
+            // 显示表头
+            const headerCell = document.querySelector(`#table-header th:nth-child(${columnIndex + 1})`);
+            if (headerCell) {
+                headerCell.style.display = '';
+            }
+            
+            // 显示数据行中对应的列
+            const dataCells = document.querySelectorAll(`#table-body td:nth-child(${columnIndex + 1})`);
+            dataCells.forEach(cell => {
+                cell.style.display = '';
+            });
+        }
+    });
+}
+
+// 根据状态设置查询条件
+function setSearchParamsByStatus(status) {
+    const customsStatusSelect = document.getElementById('customs-status');
+    const certStatusSelect = document.getElementById('cert-status');
+    const hasOrderSelect = document.getElementById('has-order');
+    
+    // 清空之前的条件
+    if (customsStatusSelect) customsStatusSelect.value = '';
+    if (certStatusSelect) certStatusSelect.value = '';
+    if (hasOrderSelect) hasOrderSelect.value = '';
+    
+    switch (status) {
+        case 'customs-pending':
+            // 关务未评估：关务评估状态：待提交、待确认
+            if (customsStatusSelect) {
+                customsStatusSelect.value = 'pending-submit';
+            }
+            break;
+        case 'cert-pending':
+            // 认证未评估：认证评估状态：待提交
+            if (certStatusSelect) {
+                certStatusSelect.value = 'pending-submit';
+            }
+            break;
+        case 'element-pending':
+            // 要素未确认：是否产生订单：是 且 订单报关要素状态：待提交、待确认
+            if (hasOrderSelect) {
+                hasOrderSelect.value = '是';
+            }
+            break;
+        default:
+// 触发状态TAB联动逻辑
+
+// 切换国家TAB
+
+// 初始化表格
+function initializeTable() {
+    updateTableHeader();
+    loadTableData();
+}
+
+// 更新表格表头
+function updateTableHeader() {
+    const tableHeader = document.getElementById('table-header');
+    const headers = countryTableHeaders[currentCountry] || countryTableHeaders.china;
+    
+    let headerHtml = '<tr>';
+    headers.forEach(header => {
+        let classes = [];
+        if (header.fixed) {
+            classes.push('fixed-column');
+            if (header.checkbox) {
+                classes.push('checkbox-column');
+            } else if (header.fixed === 'left') {
+                classes.push('sku-column');
+            } else if (header.fixed === 'right') {
+                classes.push('action-column');
+            }
+        }
+        if (header.numeric) {
+            classes.push('numeric');
+        }
+        
+        // 特殊处理复选框列
+        if (header.checkbox) {
+            headerHtml += `<th class="${classes.join(' ')}">
+                <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)">
+            </th>`;
+        } else {
+            headerHtml += `<th class="${classes.join(' ')}">${header.title}</th>`;
+        }
+    });
+    headerHtml += '</tr>';
+    
+    tableHeader.innerHTML = headerHtml;
+}
+
+// 加载表格数据
+function loadTableData() {
+    // 显示加载状态
+    showLoadingState();
+    
+    // 模拟API调用
+    setTimeout(() => {
+        // 这里应该是实际的API调用
+        const mockData = generateMockData();
+        renderTableData(mockData);
+        updatePagination();
+    }, 500);
+}
+
+// 显示加载状态
+function showLoadingState() {
+    const tableBody = document.getElementById('table-body');
+    const headers = countryTableHeaders[currentCountry] || countryTableHeaders.china;
+    
+    tableBody.innerHTML = `
+        <tr class="loading-row">
+            <td colspan="${headers.length}" class="loading-message">
+                <div class="loading-content">
+                    <div class="loading-spinner">⏳</div>
+                    <div class="loading-text">数据加载中...</div>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+// 根据查询条件过滤数据
+function filterDataBySearchParams(data, params) {
+    return data.filter(item => {
+        // 国内SKU过滤
+        if (params.domesticSku && params.domesticSku.trim()) {
+            const skus = params.domesticSku.split('\n').map(s => s.trim()).filter(s => s);
+            if (!skus.some(sku => item.domesticSku.includes(sku))) return false;
+        }
+        
+        // 国际SKU过滤
+        if (params.internationalSku && params.internationalSku.trim()) {
+            const skus = params.internationalSku.split('\n').map(s => s.trim()).filter(s => s);
+            if (!skus.some(sku => item.internationalSku.includes(sku))) return false;
+        }
+        
+        // 海关编码过滤
+        if (params.hscode && params.hscode.trim()) {
+            const codes = params.hscode.split('\n').map(s => s.trim()).filter(s => s);
+            if (!codes.some(code => item.hscode.includes(code))) return false;
+        }
+        
+        // 商品标题过滤
+        if (params.productTitle && params.productTitle.trim()) {
+            if (!item.productName.includes(params.productTitle.trim())) return false;
+        }
+        
+        // 数据来源过滤
+        if (params.dataSource && params.dataSource !== item.dataSource) return false;
+        
+        // 关务评估状态过滤
+        if (params.customsStatus && params.customsStatus !== item.customsStatus) return false;
+        
+        // 服务商过滤
+        if (params.serviceProvider && params.serviceProvider !== item.serviceProvider) return false;
+        
+        // 认证评估状态过滤
+        if (params.certStatus && params.certStatus !== item.certStatus) return false;
+        
+        // 商品评估状态过滤
+        if (params.productStatus && params.productStatus !== item.productStatus) return false;
+        
+        // 是否产生订单过滤
+        if (params.hasOrder && params.hasOrder !== item.hasOrder) return false;
+        
+        // 创建人ERP过滤
+        if (params.creatorErp && params.creatorErp.trim()) {
+            if (!item.creator.includes(params.creatorErp.trim())) return false;
+        }
+        
+        // 创建时间过滤
+        if (params.createTimeStart && item.createTime < params.createTimeStart) return false;
+        if (params.createTimeEnd && item.createTime > params.createTimeEnd) return false;
+        
+        // 评估截止时间过滤
+        if (params.deadlineStart && item.deadline && item.deadline < params.deadlineStart) return false;
+        if (params.deadlineEnd && item.deadline && item.deadline > params.deadlineEnd) return false;
+        
+        // 更新人ERP过滤
+        if (params.updaterErp && params.updaterErp.trim()) {
+            if (!item.updater.includes(params.updaterErp.trim())) return false;
+        }
+        
+        // 更新时间过滤
+        if (params.updateTimeStart && item.updateTime < params.updateTimeStart) return false;
+        if (params.updateTimeEnd && item.updateTime > params.updateTimeEnd) return false;
+        
+        return true;
+    });
+}
+
+// 根据状态TAB过滤数据
+function filterDataByStatus(data, status) {
+    switch (status) {
+        case 'customs-pending':
+            return data.filter(item => item.customsStatus === 'pending-submit' || item.customsStatus === 'pending-confirm');
+        case 'cert-pending':
+            return data.filter(item => item.certStatus === 'pending-submit');
+        case 'element-pending':
+            return data.filter(item => item.hasOrder === '是' && item.elementStatus === 'pending-submit');
+        default:
+            return data;
+    }
+}
+
+// 渲染表格数据
+
+
+// 获取状态文本
+function getStatusText(status) {
+    const statusMap = {
+        'pending-submit': '待提交',
+        'pending-confirm': '待确认',
+        'confirmed': '已确认',
+        'submitted': '已提交',
+        'active': '已生效',
+        'inactive': '未生效'
+    };
+    return statusMap[status] || status;
+}
+
+// 更新状态徽标
+function updateStatusBadges() {
+    // 这里应该从API获取实际的统计数据
+    const badges = {
+        'all': 1234,
+        'customs-pending': 56,
+        'cert-pending': 23,
+        'element-pending': 12
+    };
+    
+    Object.keys(badges).forEach(status => {
+        const tab = document.querySelector(`[data-status="${status}"]`);
+        if (tab) {
+            const badge = tab.querySelector('.badge');
+            if (badge) {
+                badge.textContent = badges[status];
+            }
+        }
+    });
+}
+
+// 重置查询
+// 分页功能
+function updatePagination() {
+    const pageInfo = document.getElementById('page-info');
+    const totalRecordsSpan = document.getElementById('total-records');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const pageInput = document.getElementById('page-input');
+    
+    if (pageInfo) {
+        pageInfo.textContent = `第${currentPage}页，共${totalPages}页`;
+    }
+    
+    if (totalRecordsSpan) {
+        totalRecordsSpan.textContent = totalRecords;
+    }
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentPage <= 1;
+    }
+    
+    if (nextBtn) {
+        nextBtn.disabled = currentPage >= totalPages;
+    }
+    
+    if (pageInput) {
+        pageInput.value = currentPage;
+        pageInput.max = totalPages;
+    }
+}
+
+// 操作按钮功能
+
+// 操作按钮功能
+function exportData() {
+    console.log('导出数据');
+    alert('导出功能开发中...');
+}
+
+function importProducts() {
+    console.log('导入商品');
+    alert('导入商品功能开发中...');
+}
+
+function importCustomsAssessment() {
+    console.log('导入关务评估');
+    alert('导入关务评估功能开发中...');
+}
+
+function customsAssessment() {
+    console.log('关务评估');
+    alert('关务评估功能开发中...');
+}
+
+function assignServiceProvider() {
+    console.log('分配服务商');
+    alert('分配服务商功能开发中...');
+}
+
+function customsConfirm() {
+    console.log('关务确认');
+    alert('关务确认功能开发中...');
+}
+
+function certificationAssessment() {
+    console.log('认证评估');
+    alert('认证评估功能开发中...');
+}
+// 获取当前选中的国家
+function getCurrentCountry() {
+    return currentCountry || 'china';
+}
+
+// 生成操作按钮
+function generateActionButtons(row) {
+    const buttons = [];
+    const country = getCurrentCountry();
+    
+    // 根据状态显示不同的按钮
+    // 关务评估状态为待提交时显示【关务评估】按钮
+    if (row.customsStatus === 'pending-submit') {
+        buttons.push(`<button class="btn btn-sm btn-primary" onclick="performCustomsEvaluation(getCurrentRowData('${row.domesticSku}'))">关务评估</button>`);
+    }
+    
+    // 关务评估状态为待确认时显示【关务确认】按钮
+    if (row.customsStatus === 'pending-confirm') {
+        buttons.push(`<button class="btn btn-sm btn-success" onclick="performCustomsConfirmation(getCurrentRowData('${row.domesticSku}'))">关务确认</button>`);
+    }
+    
+    // 认证评估状态为待提交时显示【认证评估】按钮
+    if (row.certStatus === 'pending-submit') {
+        buttons.push(`<button class="btn btn-sm btn-info" onclick="performCertEvaluation(getCurrentRowData('${row.domesticSku}'))">认证评估</button>`);
+    }
+    
+    // 分配服务商按钮（当服务商为空时显示）
+    if (!row.serviceProvider || row.serviceProvider === '') {
+        buttons.push(`<button class="btn btn-sm btn-warning" onclick="performAssignProvider('${row.domesticSku}')">分配服务商</button>`);
+    }
+    
+    // 查看详情按钮（始终显示）
+    buttons.push(`<button class="btn btn-sm btn-outline-primary" onclick="viewProductDetail('${row.domesticSku}')">查看</button>`);
+    
+    // 删除按钮（始终显示）
+    buttons.push(`<button class="btn btn-sm btn-outline-danger" onclick="deleteProduct('${row.domesticSku}')">删除</button>`);
+    
+    return buttons.join(' ');
+}
+
+// 执行关务评估
+function performCustomsAssessment(domesticSku) {
+    console.log('执行关务评估:', domesticSku);
+    
+    // 模拟关务评估提交
+    const confirmed = confirm(`确定要对商品 ${domesticSku} 进行关务评估吗？`);
+    if (confirmed) {
+        // 更新商品状态
+        updateProductStatus(domesticSku, 'customsStatus', 'pending-confirm');
+        alert('关务评估已提交，状态更新为待确认');
+        
+        // 重新加载数据
+        loadTableData();
+    }
+}
+
+// 执行关务确认
+function performCustomsConfirm(domesticSku) {
+    console.log('执行关务确认:', domesticSku);
+    
+    const confirmed = confirm(`确定要确认商品 ${domesticSku} 的关务评估结果吗？`);
+    if (confirmed) {
+        // 更新商品状态
+        updateProductStatus(domesticSku, 'customsStatus', 'confirmed');
+        
+        // 同时更新海关编码和税率信息
+        updateCustomsInfo(domesticSku);
+        
+        // 检查是否需要更新商品评估状态
+        checkAndUpdateProductStatus(domesticSku);
+        
+        alert('关务确认完成，海关编码和税率信息已更新');
+        
+        // 重新加载数据
+        loadTableData();
+    }
+}
+
+// 执行认证评估
+function performCertAssessment(domesticSku) {
+    console.log('执行认证评估:', domesticSku);
+    
+    const confirmed = confirm(`确定要对商品 ${domesticSku} 进行认证评估吗？`);
+    if (confirmed) {
+        // 更新商品状态
+        updateProductStatus(domesticSku, 'certStatus', 'submitted');
+        
+        // 更新强制性认证信息
+        updateCertificationInfo(domesticSku);
+        
+        // 检查是否需要更新商品评估状态
+        checkAndUpdateProductStatus(domesticSku);
+        
+        alert('认证评估已提交，强制性认证信息已更新');
+        
+        // 重新加载数据
+        loadTableData();
+    }
+}
+
+// 执行分配服务商
+function performAssignProvider(domesticSku) {
+    console.log('分配服务商:', domesticSku);
+    
+    const providers = ['科橘', '猎芯'];
+    const selectedProvider = prompt(`请选择服务商：\n1. ${providers[0]}\n2. ${providers[1]}\n\n请输入数字 1 或 2:`);
+    
+    if (selectedProvider === '1' || selectedProvider === '2') {
+        const providerName = providers[parseInt(selectedProvider) - 1];
+        updateProductStatus(domesticSku, 'serviceProvider', providerName);
+        alert(`已将商品 ${domesticSku} 分配给服务商：${providerName}`);
+        
+        // 重新加载数据
+        loadTableData();
+    }
+}
+
+// 查看商品详情
+function viewProductDetail(domesticSku) {
+    console.log('查看商品详情:', domesticSku);
+    
+    // 这里可以打开详情弹窗或跳转到详情页面
+    alert(`查看商品详情功能开发中...\n商品SKU: ${domesticSku}`);
+}
+
+// 删除商品
+function deleteProduct(domesticSku) {
+    console.log('删除商品:', domesticSku);
+    
+    const confirmed = confirm(`确定要删除商品 ${domesticSku} 吗？此操作不可撤销！`);
+    if (confirmed) {
+        // 从数据中删除商品
+        removeProductFromData(domesticSku);
+        alert(`商品 ${domesticSku} 已删除`);
+        
+        // 重新加载数据
+        loadTableData();
+    }
+}
+
+// 初始化全局数据存储
+function initializeGlobalDataStore() {
+    if (Object.keys(globalDataStore).length === 0) {
+        globalDataStore = {
+            china: generateChinaData(),
+            thailand: generateThailandData(),
+            vietnam: generateVietnamData(),
+            malaysia: generateMalaysiaData(),
+            indonesia: generateIndonesiaData(),
+            hungary: generateHungaryData(),
+            brazil: generateBrazilData()
+        };
+    }
+}
+
+// 获取当前国家的数据
+function getCurrentCountryData() {
+    initializeGlobalDataStore();
+    return globalDataStore[currentCountry] || [];
+}
+
+// 更新商品状态
+function updateProductStatus(domesticSku, field, value) {
+    initializeGlobalDataStore();
+    
+    let data = globalDataStore[currentCountry] || [];
+    const product = data.find(item => item.domesticSku === domesticSku);
+    
+    if (product) {
+        product[field] = value;
+        product.updateTime = new Date().toISOString().split('T')[0];
+        product.updater = '当前用户'; // 实际应用中应该是当前登录用户
+        
+        console.log(`商品 ${domesticSku} 的 ${field} 已更新为: ${value}`);
+    } else {
+        console.error(`未找到商品: ${domesticSku}`);
+    }
+}
+
+// 更新海关编码和税率信息
+function updateCustomsInfo(domesticSku) {
+    initializeGlobalDataStore();
+    
+    let data = globalDataStore[currentCountry] || [];
+    const product = data.find(item => item.domesticSku === domesticSku);
+    
+    if (product) {
+        // 模拟生成海关编码和税率信息
+        product.hscode = `${Math.floor(Math.random() * 90000000) + 10000000}`;
+        
+        // 根据不同国家更新对应的税率字段
+        switch (currentCountry) {
+            case 'china':
+                product.exportTaxRate = `${(Math.random() * 15).toFixed(1)}%`;
+                product.exportTariffRate = `${(Math.random() * 10).toFixed(1)}%`;
+                break;
+                
+            case 'thailand':
+            case 'vietnam':
+                product.importTariffRate = `${(Math.random() * 25).toFixed(1)}%`;
+                product.vatRate = `${(Math.random() * 12 + 3).toFixed(1)}%`;
+                break;
+                
+            case 'malaysia':
+                product.mfnRate = `${(Math.random() * 20).toFixed(1)}%`;
+                product.formE = Math.random() > 0.5 ? '适用' : '不适用';
+                product.sst = `${(Math.random() * 10).toFixed(1)}%`;
+                product.antiDumping = Math.random() > 0.8 ? `${(Math.random() * 50).toFixed(1)}%` : '无';
+                break;
+                
+            case 'indonesia':
+                product.formE = Math.random() > 0.5 ? '适用' : '不适用';
+                product.ppn = `${(Math.random() * 11 + 10).toFixed(1)}%`;
+                product.pph = `${(Math.random() * 5 + 2).toFixed(1)}%`;
+                product.ppnbm = Math.random() > 0.7 ? `${(Math.random() * 75 + 25).toFixed(1)}%` : '无';
+                product.bmt = `${(Math.random() * 10).toFixed(1)}%`;
+                break;
+                
+            case 'hungary':
+                product.importDuty = `${(Math.random() * 15).toFixed(1)}%`;
+                product.antiDumping = Math.random() > 0.8 ? `${(Math.random() * 50).toFixed(1)}%` : '无';
+                product.countervailing = Math.random() > 0.9 ? `${(Math.random() * 30).toFixed(1)}%` : '无';
+                product.vat = `${(Math.random() * 8 + 20).toFixed(1)}%`;
+                break;
+                
+            case 'brazil':
+                product.ii = `${(Math.random() * 35).toFixed(1)}%`;
+                product.ipi = `${(Math.random() * 30).toFixed(1)}%`;
+                product.pis = `${(Math.random() * 2 + 1).toFixed(2)}%`;
+                product.confins = `${(Math.random() * 8 + 3).toFixed(2)}%`;
+                product.icms = `${(Math.random() * 8 + 17).toFixed(1)}%`;
+                product.antiDumping = Math.random() > 0.8 ? `${(Math.random() * 50).toFixed(1)}%` : '无';
+                break;
+                
+            default:
+                // 默认情况，使用通用字段
+                product.importTariffRate = `${(Math.random() * 25).toFixed(1)}%`;
+                product.vatRate = `${(Math.random() * 12 + 3).toFixed(1)}%`;
+                break;
+        }
+        
+        product.isControlled = Math.random() > 0.8;
+        product.controlInfo = product.isControlled ? '需要相关许可证' : '';
+        
+        console.log(`已更新商品 ${domesticSku} 在 ${currentCountry} 的税率信息`);
+    }
+}
+
+// 更新强制性认证信息
+function updateCertificationInfo(domesticSku) {
+    initializeGlobalDataStore();
+    
+    let data = globalDataStore[currentCountry] || [];
+    const product = data.find(item => item.domesticSku === domesticSku);
+    
+    if (product) {
+        // 模拟更新强制性认证信息
+        // 这里可以添加具体的认证信息字段
+        console.log(`更新商品 ${domesticSku} 的强制性认证信息`);
+    }
+}
+
+// 检查并更新商品评估状态
+function checkAndUpdateProductStatus(domesticSku) {
+    initializeGlobalDataStore();
+    
+    let data = globalDataStore[currentCountry] || [];
+    const product = data.find(item => item.domesticSku === domesticSku);
+    
+    if (product) {
+        // 只有当关务评估状态已确认，且认证评估状态已提交时，商品评估状态才变成已生效
+        if (product.customsStatus === 'confirmed' && product.certStatus === 'submitted') {
+            product.productStatus = 'active';
+            console.log(`商品 ${domesticSku} 评估状态已更新为已生效`);
+        }
+    }
+}
+
+// 从数据中删除商品
+function removeProductFromData(domesticSku) {
+    initializeGlobalDataStore();
+    
+    let data = globalDataStore[currentCountry] || [];
+    const index = data.findIndex(item => item.domesticSku === domesticSku);
+    
+    if (index !== -1) {
+        data.splice(index, 1);
+        console.log(`从数据中删除商品: ${domesticSku}`);
+    } else {
+        console.error(`未找到要删除的商品: ${domesticSku}`);
+    }
+}
+// 复选框功能
+function toggleSelectAll(checkbox) {
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    rowCheckboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+}
+
+// 查询表单展开/收起功能
+// 绑定展开/收起按钮事件
+function bindToggleEvents() {
+    const toggleBtn = document.getElementById('search-toggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', toggleSearchForm);
+    }
+}
+
+// 状态TAB和查询组件联动功能
+function initStatusTabLinkage() {
+    const statusTabs = document.querySelectorAll('.status-tab');
+    const customsStatusSelect = document.getElementById('customs-status');
+    const certStatusSelect = document.getElementById('cert-status');
+    const hasOrderSelect = document.getElementById('has-order');
+    
+    statusTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const status = this.getAttribute('data-status');
+            
+            // 重置所有select到placeholder状态
+            resetSelectToPlaceholder(customsStatusSelect);
+            resetSelectToPlaceholder(certStatusSelect);
+            resetSelectToPlaceholder(hasOrderSelect);
+            
+            // 根据状态TAB更新选项
+            switch(status) {
+                case 'customs-pending':
+                    // 关务未评估：关务评估状态只留下待提交和待确认
+                    updateSelectOptions(customsStatusSelect, [
+                        {value: 'pending-submit', text: '待提交'},
+                        {value: 'pending-confirm', text: '待确认'}
+                    ]);
+                    break;
+                    
+                case 'cert-pending':
+                    // 认证未评估：强制性认证评估状态只留下待提交
+                    updateSelectOptions(certStatusSelect, [
+                        {value: 'pending-submit', text: '待提交'}
+                    ]);
+                    break;
+                    
+                case 'element-pending':
+                    // 要素未确认：是否产生订单只留下是
+                    updateSelectOptions(hasOrderSelect, [
+                        {value: 'yes', text: '是'}
+                    ]);
+                    break;
+                    
+                default:
+                    // 恢复所有选项
+                    restoreAllSelectOptions();
+                    break;
+            }
+        });
+    });
+}
+
+function resetSelectToPlaceholder(select) {
+    if (select) {
+        select.value = '';
+        select.style.color = '#999';
+    }
+}
+
+
+
+}}

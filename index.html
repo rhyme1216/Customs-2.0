@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关务管理系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="menu">
+            <div class="menu-item">
+                <div class="menu-title" data-menu="product">商品管理</div>
+                <div class="submenu" id="product-submenu">
+                    <div class="submenu-item">跨境商品管理</div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-title" data-menu="tax">税务管理</div>
+                <div class="submenu" id="tax-submenu">
+                    <div class="submenu-item" data-tariff="true">关务税则维护</div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-title" data-menu="customs">关务管理</div>
+                <div class="submenu" id="customs-submenu">
+                    <div class="submenu-item">关务商品管理</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <h1>关务管理系统</h1>
+        <p>请从左侧菜单选择功能模块</p>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

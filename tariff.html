@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>税则库管理</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tariff.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="menu">
+            <div class="menu-item">
+                <div class="menu-title" data-menu="product">商品管理</div>
+                <div class="submenu" id="product-submenu">
+                    <div class="submenu-item">跨境商品管理</div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-title active" data-menu="tax">税务管理</div>
+                <div class="submenu open" id="tax-submenu">
+                    <div class="submenu-item active" data-tariff="true">关务税则维护</div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-title" data-menu="customs">关务管理</div>
+                <div class="submenu" id="customs-submenu">
+                    <div class="submenu-item">关务商品管理</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content-wrapper">
+        <div class="container">
+        <!-- 面包屑导航 -->
+        <div class="breadcrumb">
+            <span>税务管理</span>
+            <span class="separator">></span>
+            <span id="current-country">关务税则维护</span>
+        </div>
+
+        <!-- 查询条件区域 -->
+        <div class="search-section">
+            <div class="search-form">
+                <div class="form-group">
+                    <label for="hscode-input">海关编码：</label>
+                    <textarea id="hscode-input" placeholder="请输入海关编码，多个编码请回车换行分隔"></textarea>
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="searchTariff()">查询</button>
+                    <button class="btn btn-secondary" onclick="resetSearch()">重置</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 国家选择标签 -->
+        <div class="country-tabs">
+            <button class="tab-btn active" data-country="china">中国</button>
+            <button class="tab-btn" data-country="thailand">泰国</button>
+            <button class="tab-btn" data-country="vietnam">越南</button>
+            <button class="tab-btn" data-country="malaysia">马来</button>
+            <button class="tab-btn" data-country="indonesia">印尼</button>
+            <button class="tab-btn" data-country="hungary">匈牙利</button>
+            <button class="tab-btn" data-country="brazil">巴西</button>
+        </div>
+
+        <!-- 操作按钮区域 -->
+        <div class="action-section">
+            <button class="btn btn-success" onclick="addTariff()">新增</button>
+            <button class="btn btn-warning" onclick="batchOperation()">批量操作</button>
+        </div>
+
+        <!-- 数据表格容器 -->
+        <div class="table-container">
+            <div class="table-wrapper">
+                <table id="tariff-table" class="data-table">
+                    <thead id="table-header">
+                        <!-- 表头将根据选择的国家动态生成 -->
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- 表格数据将根据选择的国家动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="pagination">
+            <button class="btn btn-sm" onclick="prevPage()" id="prev-btn">上一页</button>
+            <span id="page-info">第1页，共1页</span>
+            <div class="page-jump">
+                <span>跳至</span>
+                <input type="number" id="page-input" min="1" style="width: 50px; height: 24px; text-align: center; border: 1px solid #ddd; border-radius: 4px; margin: 0 5px;">
+                <span>页</span>
+                <button class="btn btn-sm" onclick="jumpToPage()">跳转</button>
+            </div>
+            <button class="btn btn-sm" onclick="nextPage()" id="next-btn">下一页</button>
+            <div class="page-size-info">
+                <span>共 <span id="total-records">0</span> 条，每页显示 20 条</span>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="tariff.js"></script>
+</body>
+</html>
