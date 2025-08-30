@@ -29,6 +29,7 @@ const chinaEndColumns = [
     { key: 'customsStatus', title: '关务评估状态', width: 120 },
     { key: 'productStatus', title: '商品评估状态', width: 120 },
     { key: 'hasOrder', title: '是否产生订单', width: 100 },
+    { key: 'firstOrderTime', title: '首次产生订单时间', width: 140 },
     { key: 'declarationElements', title: '申报要素', width: 180 },
     { key: 'declarationNameCn', title: '申报中文品名', width: 150 },
     { key: 'elementStatus', title: '要素状态', width: 100 },
@@ -54,6 +55,7 @@ const otherCountryEndColumns = [
     { key: 'certStatus', title: '强制性认证状态', width: 140 },
     { key: 'productStatus', title: '商品评估状态', width: 120 },
     { key: 'hasOrder', title: '是否产生订单', width: 100 },
+    { key: 'firstOrderTime', title: '首次产生订单时间', width: 140 },
     { key: 'creator', title: '创建人', width: 100 },
     { key: 'salesNote', title: '采销备注', width: 150 },
     { key: 'createTime', title: '创建时间', width: 120 },
@@ -167,23 +169,33 @@ function generateProductData(countryConfig, count = 5, isChina = false) {
             brandAuth: getRandomStatus('brandAuth'), // 从4个枚举值中随机选择
             isControlled: isControlled,
             controlInfo: isControlled === '是' ? '存在管制' : '',
-            declarationElements: statuses.elementStatus === 'confirmed' ? 
-                `品牌类型:${Math.floor(Math.random() * 5)}|英文品牌名:${template.brand}|型号:${template.model}|用途:工业用` : '-',
-            declarationNameCn: statuses.elementStatus === 'confirmed' ? 
-                `工业品` : '-',
-            declarationNameEn: statuses.elementStatus === 'confirmed' ? 
-                `${template.brand} ${template.model} Industrial Equipment` : '-',
+            declarationElements: (statuses.elementStatus === 'confirmed' || statuses.elementStatus === 'pending-confirm') ? 
+                `品牌类型:${Math.floor(Math.random() * 5)}|英文品牌名:${template.brand}|型号:${template.model}|用途:工业用` : '',
+            declarationNameCn: (statuses.elementStatus === 'confirmed' || statuses.elementStatus === 'pending-confirm') ? 
+                `工业品` : '',
+            declarationNameEn: (statuses.elementStatus === 'confirmed' || statuses.elementStatus === 'pending-confirm') ? 
+                `${template.brand} ${template.model} Industrial Equipment` : '',
             deadline: `2024-0${3 + index}-${10 + index * 5}`,
             customsStatus: statuses.customsStatus,
             certStatus: statuses.certStatus,
             productStatus: statuses.productStatus,
-            hasOrder: forceElementPending ? '是' : getRandomStatus('hasOrder'),
-            elementStatus: statuses.elementStatus,
-            createTime: `2024-01-${15 + index} 09:30:25`,
-            updateTime: `2024-01-${20 + index} 14:25:30`,
-            ...commonFields,
-            ...countryConfig
         };
+        
+        // 先确定是否产生订单
+        const hasOrderValue = forceElementPending ? '是' : getRandomStatus('hasOrder');
+        baseData.hasOrder = hasOrderValue;
+        
+        // 根据是否产生订单来生成首次产生订单时间
+        baseData.firstOrderTime = hasOrderValue === '是' ? 
+            `2024-0${Math.floor(Math.random() * 6) + 1}-${Math.floor(Math.random() * 28) + 1} ${Math.floor(Math.random() * 12) + 8}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}` : 
+            '-';
+            
+        baseData.elementStatus = statuses.elementStatus;
+        baseData.createTime = `2024-01-${15 + index} 09:30:25`;
+        baseData.updateTime = `2024-01-${20 + index} 14:25:30`;
+        
+        // 合并公共字段和国家配置
+        Object.assign(baseData, commonFields, countryConfig);
         
         // 只有非中国TAB才添加强制性认证字段
         if (!isChina) {

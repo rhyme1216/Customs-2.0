@@ -409,11 +409,22 @@ function clearAllSelections() {
 
 // 设置多选下拉框的值
 function setMultiSelectValues(selectId, values) {
-    console.log(`设置多选下拉框 ${selectId} 的值:`, values);
+    console.log(`设置多选下拉框 ${selectId} 的默认值:`, values);
     const container = document.getElementById(selectId);
     console.log(`找到容器:`, container);
     if (container && container.classList.contains('multi-select-container')) {
-        console.log(`容器有效，开始设置值`);
+        console.log(`容器有效，开始设置默认值，用户仍可点击修改`);
+        
+        // 如果有MultiSelectComponent实例，直接使用实例的方法
+        if (container.multiSelectInstance) {
+            console.log('使用MultiSelectComponent实例设置值');
+            container.multiSelectInstance.setValues(values);
+            return;
+        }
+        
+        // 如果没有实例，则手动操作DOM（兼容性处理）
+        console.log('手动操作DOM设置值');
+        
         // 先清除所有选中状态
         const checkboxes = container.querySelectorAll('.multi-select-checkbox');
         checkboxes.forEach(checkbox => {
@@ -474,11 +485,6 @@ function setMultiSelectValues(selectId, values) {
                     }
                 }
             });
-        }
-        
-        // 如果有对应的MultiSelectComponent实例，也更新其数据
-        if (container.multiSelectInstance) {
-            container.multiSelectInstance.setValues(values);
         }
     }
 }
@@ -635,15 +641,15 @@ function renderTableData(response) {
                     cellContent = '<span class="order-status order-unknown">-</span>';
                 }
             } else if (header.key === 'declarationElements') {
-                // 申报要素：只有状态为已确认时才显示
-                if (row.elementStatus === 'confirmed' && cellContent && cellContent !== '-') {
+                // 申报要素：要素状态为已确认或待确认时才显示
+                if ((row.elementStatus === 'confirmed' || row.elementStatus === 'pending-confirm') && cellContent && cellContent !== '-') {
                     cellContent = `<span class="declaration-elements">${cellContent}</span>`;
                 } else {
                     cellContent = '-';
                 }
             } else if (header.key === 'declarationNameCn') {
-                // 申报中文品名：只有状态为已确认时才显示
-                if (row.elementStatus === 'confirmed' && cellContent && cellContent !== '-') {
+                // 申报中文品名：要素状态为已确认或待确认时才显示
+                if ((row.elementStatus === 'confirmed' || row.elementStatus === 'pending-confirm') && cellContent && cellContent !== '-') {
                     cellContent = `<span class="declaration-name">${cellContent}</span>`;
                 } else {
                     cellContent = '-';
@@ -990,27 +996,7 @@ function switchCountryTab(country) {
             return true;
         });
     }
-    
-    // 根据状态TAB过滤数据
-    if (currentStatus !== 'all') {
-        data = data.filter(item => {
-            switch (currentStatus) {
-                case 'pending-submit':
-                    return item.customsStatus === 'pending-submit';
-                case 'pending-confirm':
-                    return item.customsStatus === 'pending-confirm';
-                case 'confirmed':
-                    return item.customsStatus === 'confirmed';
-                case 'cert-pending':
-                    return item.certStatus === 'pending-submit';
-                case 'element-pending':
-                    return item.hasOrder === '是' && (item.elementStatus === 'pending-submit' || item.elementStatus === 'pending-confirm');
-                default:
-                    return true;
-            }
-        });
-    }
-    
+
     const total = data.length;
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
@@ -1143,7 +1129,7 @@ function updateMultiSelectOptions(containerId, options) {
             {value: 'no', text: '否'}
         ],
         'element-status': [
-            {value: 'pending-submit', text: '待编辑'},
+            {value: 'pending-submit', text: '待提交'},
             {value: 'pending-confirm', text: '待确认'},
             {value: 'confirmed', text: '已确认'}
         ]
@@ -1211,19 +1197,23 @@ function triggerStatusTabLinkage(status) {
         case 'customs-pending':
             // 关务评估TAB：隐藏认证状态、要素状态、是否产生订单、首次产生订单时间
             hideQueryComponents(['cert-status-group', 'element-status-group', 'has-order-group', 'first-order-time-group']);
-            console.log('设置关务状态:', ['pending-submit', 'pending-confirm']);
-            // 使用延迟确保DOM准备就绪
+            console.log('设置关务状态默认值（用户可修改）:', ['pending-submit', 'pending-confirm']);
+            // 使用延迟确保DOM准备就绪，并重新绑定事件
             setTimeout(() => {
                 setMultiSelectValues('customs-status', ['pending-submit', 'pending-confirm']);
+                // 确保事件绑定正常
+                ensureMultiSelectEvents();
             }, 300);
             break;
             
         case 'cert-pending':
             // 认证评估TAB：隐藏关务状态、要素状态、是否产生订单、服务商、首次产生订单时间
             hideQueryComponents(['customs-status-group', 'element-status-group', 'has-order-group', 'service-provider-group', 'first-order-time-group']);
-            console.log('设置认证状态:', ['pending-submit']);
+            console.log('设置认证状态默认值（用户可修改）:', ['pending-submit']);
             setTimeout(() => {
                 setMultiSelectValues('cert-status', ['pending-submit']);
+                // 确保事件绑定正常
+                ensureMultiSelectEvents();
             }, 300);
             break;
             
@@ -1239,21 +1229,113 @@ function triggerStatusTabLinkage(status) {
                 'customs-status-group',
                 'cert-status-group'
             ]);
-            console.log('设置是否产生订单:', ['yes']);
-            console.log('设置要素状态:', ['pending-submit', 'pending-confirm']);
+            console.log('设置是否产生订单默认值（用户可修改）:', ['yes']);
+            console.log('设置要素状态默认值（用户可修改）:', ['pending-submit', 'pending-confirm']);
             setTimeout(() => {
                 setMultiSelectValues('has-order', ['yes']);
-                // 自动勾选要素状态：待编辑和待确认
+                // 自动勾选要素状态：待提交和待确认，但用户仍可修改
                 setMultiSelectValues('element-status', ['pending-submit', 'pending-confirm']);
+                // 确保事件绑定正常
+                ensureMultiSelectEvents();
             }, 300);
             break;
             
         default:
             // 全部状态，显示所有查询条件，清除所有选择
             console.log('全部状态，显示所有查询条件');
+            // 确保事件绑定正常
+            setTimeout(() => {
+                ensureMultiSelectEvents();
+            }, 100);
             break;
     }
 }
+
+// 确保多选组件事件绑定正常
+function ensureMultiSelectEvents() {
+    console.log('🔧 强制确保多选组件事件绑定正常');
+    const containers = document.querySelectorAll('.multi-select-container');
+    
+    containers.forEach(container => {
+        console.log(`检查容器: ${container.id}`);
+        
+        // 强制重新初始化
+        if (container.multiSelectInstance) {
+            console.log(`重新绑定事件: ${container.id}`);
+            container.multiSelectInstance.bindEvents();
+            container.multiSelectInstance.bindOptionEvents();
+        } else {
+            // 如果实例不存在，重新创建
+            console.log(`重新创建实例: ${container.id}`);
+            try {
+                container.multiSelectInstance = new MultiSelectComponent(container);
+            } catch (error) {
+                console.error(`重新创建实例失败: ${container.id}`, error);
+            }
+        }
+    });
+    
+    // 额外的强制事件绑定 - 直接绑定到DOM元素
+    setTimeout(() => {
+        console.log('🔧 强制绑定点击事件到DOM元素');
+        const options = document.querySelectorAll('.multi-select-option');
+        options.forEach(option => {
+            const container = option.closest('.multi-select-container');
+            if (container && container.multiSelectInstance) {
+                // 强制绑定点击事件
+                option.onclick = (e) => {
+                    console.log(`🖱️ 强制绑定的点击事件触发: ${option.dataset.value}`);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    container.multiSelectInstance.toggleOption(option);
+                };
+            }
+        });
+        
+        // 强制绑定显示区域点击事件
+        const displays = document.querySelectorAll('.multi-select-display');
+        displays.forEach(display => {
+            const container = display.closest('.multi-select-container');
+            if (container && container.multiSelectInstance) {
+                display.onclick = (e) => {
+                    console.log(`🖱️ 强制绑定的显示区域点击事件触发`);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    container.multiSelectInstance.toggleDropdown();
+                };
+            }
+        });
+    }, 100);
+}
+
+// 调试函数 - 手动测试多选组件
+function debugMultiSelect() {
+    console.log('=== 多选组件调试信息 ===');
+    const containers = document.querySelectorAll('.multi-select-container');
+    console.log('找到容器数量:', containers.length);
+    
+    containers.forEach(container => {
+        console.log(`\n容器 ${container.id}:`);
+        console.log('- 实例存在:', !!container.multiSelectInstance);
+        console.log('- 显示区域存在:', !!container.querySelector('.multi-select-display'));
+        console.log('- 下拉框存在:', !!container.querySelector('.multi-select-dropdown'));
+        console.log('- 选项数量:', container.querySelectorAll('.multi-select-option').length);
+        
+        if (container.multiSelectInstance) {
+            console.log('- 实例状态:', {
+                selectedValues: container.multiSelectInstance.selectedValues,
+                options: container.multiSelectInstance.options.length
+            });
+        }
+    });
+    
+    // 手动触发强制绑定
+    console.log('\n手动触发强制绑定...');
+    ensureMultiSelectEvents();
+}
+
+// 在全局暴露调试函数
+window.debugMultiSelect = debugMultiSelect;
 
 // 静态模拟数据 - 使用data-simplified.js生成
 // 注意：data-simplified.js会在window对象上导出staticMockData和tableColumns
@@ -1274,6 +1356,11 @@ function initializePage() {
     
     // 初始化多选组件
     initMultiSelectComponents();
+    
+    // 强制确保多选组件事件正常
+    setTimeout(() => {
+        ensureMultiSelectEvents();
+    }, 500);
     
     // 绑定展开/收起按钮事件
     bindToggleEvents();
@@ -1336,10 +1423,22 @@ function searchProducts() {
     // 收集查询参数
     searchParams = {};
     
+    // 收集普通表单元素的值
     const formElements = document.querySelectorAll('.search-form input, .search-form select');
     formElements.forEach(element => {
         if (element.value && element.value !== '') {
             searchParams[element.name || element.id] = element.value;
+        }
+    });
+    
+    // 收集多选组件的值
+    const multiSelectContainers = document.querySelectorAll('.search-form .multi-select-container');
+    multiSelectContainers.forEach(container => {
+        if (container.multiSelectInstance) {
+            const values = container.multiSelectInstance.getValues();
+            if (values && values.length > 0) {
+                searchParams[container.id] = values;
+            }
         }
     });
     
@@ -1360,6 +1459,14 @@ function resetSearch() {
         element.value = '';
         if (element.tagName === 'SELECT') {
             element.style.color = '#999';
+        }
+    });
+    
+    // 清空多选组件的选中状态
+    const multiSelectContainers = document.querySelectorAll('.search-form .multi-select-container');
+    multiSelectContainers.forEach(container => {
+        if (container.multiSelectInstance) {
+            container.multiSelectInstance.clear();
         }
     });
     
@@ -1826,6 +1933,11 @@ function openElementEditModal(productData, isSubsequentEdit = false, adjustmentR
     // 生成必填申报要素字段
     generateRequiredElementFields(productData.chinaHscode || productData.hscode);
     
+    // 如果是后续编辑或已有申报要素数据，需要填充现有的申报要素到表单中
+    if (productData.declarationElements && productData.declarationElements !== '' && productData.declarationElements !== '-') {
+        fillExistingElementData(productData.declarationElements);
+    }
+    
     // 根据编辑类型调整弹窗按钮
     adjustModalButtons(isSubsequentEdit);
     
@@ -1838,6 +1950,63 @@ function openElementEditModal(productData, isSubsequentEdit = false, adjustmentR
     
     // 绑定输入事件监听器
     bindElementInputEvents();
+}
+
+/**
+ * 填充现有申报要素数据到表单
+ * @param {string} elementString - 申报要素字符串
+ */
+function fillExistingElementData(elementString) {
+    if (!elementString || elementString === '' || elementString === '-') {
+        return;
+    }
+    
+    try {
+        // 解析申报要素字符串，格式：品牌类型:1|英文品牌名:Brand|型号:Model|用途:工业用
+        const elements = elementString.split('|');
+        
+        elements.forEach(element => {
+            const [key, value] = element.split(':');
+            if (key && value) {
+                // 根据key找到对应的表单元素并填充值
+                const trimmedKey = key.trim();
+                const trimmedValue = value.trim();
+                
+                // 处理中文key到英文key的映射
+                let fieldKey = trimmedKey;
+                switch (trimmedKey) {
+                    case '品牌类型':
+                        fieldKey = 'brandType';
+                        break;
+                    case '英文品牌名':
+                    case '品牌':
+                        fieldKey = 'brand';
+                        break;
+                    case '型号':
+                        fieldKey = 'model';
+                        break;
+                    case '用途':
+                        fieldKey = 'usage';
+                        break;
+                    case '材质':
+                        fieldKey = 'material';
+                        break;
+                    case '规格':
+                        fieldKey = 'specification';
+                        break;
+                }
+                
+                // 查找对应的表单元素
+                const fieldElement = document.getElementById(`element-${fieldKey}`);
+                if (fieldElement) {
+                    fieldElement.value = trimmedValue;
+                    console.log(`填充申报要素字段: ${fieldKey} = ${trimmedValue}`);
+                }
+            }
+        });
+    } catch (error) {
+        console.error('解析申报要素字符串失败:', error);
+    }
 }
 
 /**
@@ -1869,8 +2038,35 @@ function savePendingConfirm() {
     
     console.log('保存待确认');
     
-    // 更新商品要素状态为待确认
-    updateProductElementStatus(currentEditingProduct.domesticSku, 'pending-confirm');
+    // 生成申报要素字符串
+    const elementString = generateElementString();
+    
+    // 获取申报中文品名
+    const declareNameCn = document.getElementById('modal-declare-name').value.trim();
+    
+    // 获取品牌类型
+    const brandType = document.getElementById('element-brandType').value;
+    
+    // 获取选中的享惠国家
+    const selectedCountries = [];
+    const countryCheckboxes = document.querySelectorAll('input[name="preferential-country"]:checked');
+    countryCheckboxes.forEach(checkbox => {
+        selectedCountries.push(checkbox.value);
+    });
+    
+    console.log('保存待确认申报要素:', {
+        domesticSku: currentEditingProduct.domesticSku,
+        elementString: elementString,
+        declareNameCn: declareNameCn,
+        brandType: brandType,
+        preferentialCountries: selectedCountries
+    });
+    
+    // 更新商品要素状态为待确认，并保存申报要素和申报中文品名
+    updateProductElementStatus(currentEditingProduct.domesticSku, 'pending-confirm', {
+        elementString: elementString,
+        declareNameCn: declareNameCn
+    });
     
     showSuccessMessage('已保存为待确认状态！');
     closeElementEditModal();
@@ -2273,8 +2469,8 @@ function updateProductElementStatus(domesticSku, status, elementData = null) {
     if (product) {
         product.elementStatus = status;
         
-        // 如果是确认状态且有要素数据，则保存申报要素和申报中文品名
-        if (status === 'confirmed' && elementData) {
+        // 如果有要素数据，则保存申报要素和申报中文品名（无论是确认状态还是待确认状态）
+        if (elementData) {
             product.declarationElements = elementData.elementString || '';
             product.declarationNameCn = elementData.declareNameCn || '';
         }
@@ -2318,9 +2514,9 @@ function clearElementForm() {
  * @returns {Array} 当前表格数据
  */
 function getCurrentTableData() {
-    // 这里应该返回当前表格的数据
-    // 在实际应用中，可能需要从全局变量或重新查询获取
-    return window.currentTableData || [];
+    // 返回当前国家的静态数据
+    return window.staticMockData && window.staticMockData[currentCountry] ? 
+           window.staticMockData[currentCountry] : [];
 }
 
 // 修改原有的performElementEdit函数，使其调用新的弹窗
