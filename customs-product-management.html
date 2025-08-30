@@ -335,6 +335,8 @@
                                 <th>强制性认证状态</th>
                                 <th>商品评估状态</th>
                                 <th>是否产生订单</th>
+                                <th>申报要素</th>
+                                <th>申报中文品名</th>
                                 <th>要素状态</th>
                                 <th>创建人</th>
                                 <th>采销备注</th>
@@ -347,7 +349,7 @@
                         <tbody id="table-body">
                             <!-- 空列表，数据将通过JavaScript动态加载 -->
                             <tr class="empty-row">
-                                <td colspan="24" class="empty-message">
+                                <td colspan="26" class="empty-message">
                                     <div class="empty-content">
                                         <div class="empty-icon">📦</div>
                                         <div class="empty-text">暂无数据</div>
@@ -374,6 +376,138 @@
                 <div class="page-size-info">
                     <span>共 <span id="total-records">0</span> 条，每页显示 20 条</span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+<!-- 编辑报关要素信息弹窗 -->
+    <div id="element-edit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>编辑报关要素信息</h3>
+                <button class="modal-close" onclick="closeElementEditModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- 商品信息展示区域 -->
+                <div class="product-info-section">
+                    <h4>商品信息</h4>
+                    <div class="product-info-grid">
+                        <div class="info-item">
+                            <label>国内SKU：</label>
+                            <a href="javascript:void(0)" id="modal-domestic-sku" class="sku-link">-</a>
+                        </div>
+                        <div class="info-item">
+                            <label>国际SKU：</label>
+                            <span id="modal-international-sku">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>商品中文名称：</label>
+                            <span id="modal-product-name">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>中国HSCODE：</label>
+                            <span id="modal-hscode">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>品牌：</label>
+                            <span id="modal-brand">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>型号：</label>
+                            <span id="modal-model">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>品牌授权：</label>
+                            <a href="javascript:void(0)" id="modal-brand-auth" class="sku-link">-</a>
+                        </div>
+                        <div class="info-item">
+                            <label>品牌类型：</label>
+                            <span id="modal-brand-type-display">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>申报中文品名：<span class="required">*</span></label>
+                            <input type="text" id="modal-declare-name" placeholder="请输入申报中文品名" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 申报要素编辑区域 -->
+                <div class="element-edit-section">
+                    <h4>申报要素编辑</h4>
+                    
+                    <!-- 必填项 -->
+                    <div class="required-elements">
+                        <h5>必填项</h5>
+                        <div class="element-fields" id="required-fields">
+                            <!-- 动态生成必填项字段 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 非必填项 -->
+                    <div class="optional-elements">
+                        <h5>非必填项</h5>
+                        <div class="element-fields">
+                            <div class="field-group">
+                                <label for="element-gtin">GTIN：</label>
+                                <input type="text" id="element-gtin" placeholder="请输入GTIN">
+                            </div>
+                            <div class="field-group">
+                                <label for="element-cas">CAS：</label>
+                                <input type="text" id="element-cas" placeholder="请输入CAS">
+                            </div>
+                            <div class="field-group">
+                                <label for="element-other">其他：</label>
+                                <input type="text" id="element-other" placeholder="请输入其他信息">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 享惠国家选择 -->
+                <div class="preferential-countries-section">
+                    <h4>享惠国家（非必填）</h4>
+                    <div class="country-checkboxes">
+                        <label class="country-checkbox">
+                            <input type="checkbox" value="thailand" name="preferential-country">
+                            <span>泰国</span>
+                        </label>
+                        <label class="country-checkbox">
+                            <input type="checkbox" value="indonesia" name="preferential-country">
+                            <span>印尼</span>
+                        </label>
+                        <label class="country-checkbox">
+                            <input type="checkbox" value="vietnam" name="preferential-country">
+                            <span>越南</span>
+                        </label>
+                        <label class="country-checkbox">
+                            <input type="checkbox" value="malaysia" name="preferential-country">
+                            <span>马来</span>
+                        </label>
+                        <label class="country-checkbox">
+                            <input type="checkbox" value="hungary" name="preferential-country">
+                            <span>匈牙利</span>
+                        </label>
+                        <label class="country-checkbox">
+                            <input type="checkbox" value="brazil" name="preferential-country">
+                            <span>巴西</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 申报要素预览 -->
+                <div class="element-preview-section">
+                    <h4>申报要素预览</h4>
+                    <div class="element-preview" id="element-preview">
+                        <!-- 实时显示拼接后的申报要素 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="abandonElementEdit()">放弃编辑</button>
+                <button class="btn btn-warning" onclick="savePendingConfirm()">保存待确认</button>
+                <button class="btn btn-primary" onclick="confirmElement()">要素确认</button>
             </div>
         </div>
     </div>

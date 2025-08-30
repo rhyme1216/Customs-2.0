@@ -18,9 +18,34 @@ const commonColumns = [
     { key: 'productName', title: '商品中文名称', width: 200 },
 ];
 
-const commonEndColumns = [
+// 中国的列配置（包含要素状态，不包含强制性认证）
+const chinaEndColumns = [
     { key: 'isControlled', title: '是否管制', width: 80 },
     { key: 'controlInfo', title: '管制信息', width: 150 },
+    { key: 'serviceProvider', title: '评估服务商', width: 100 },
+    { key: 'dataSource', title: '数据来源', width: 100 },
+    { key: 'salesErp', title: '采销ERP', width: 100 },
+    { key: 'deadline', title: '评估截止时间', width: 120 },
+    { key: 'customsStatus', title: '关务评估状态', width: 120 },
+    { key: 'productStatus', title: '商品评估状态', width: 120 },
+    { key: 'hasOrder', title: '是否产生订单', width: 100 },
+    { key: 'declarationElements', title: '申报要素', width: 180 },
+    { key: 'declarationNameCn', title: '申报中文品名', width: 150 },
+    { key: 'elementStatus', title: '要素状态', width: 100 },
+    { key: 'creator', title: '创建人', width: 100 },
+    { key: 'salesNote', title: '采销备注', width: 150 },
+    { key: 'createTime', title: '创建时间', width: 120 },
+    { key: 'updater', title: '更新人', width: 100 },
+    { key: 'updateTime', title: '更新时间', width: 120 },
+    { key: 'actions', title: '操作', fixed: 'right', width: 80 }
+];
+
+// 其他国家的列配置（不包含要素状态，包含强制性认证）
+const otherCountryEndColumns = [
+    { key: 'isControlled', title: '是否管制', width: 80 },
+    { key: 'controlInfo', title: '管制信息', width: 150 },
+    { key: 'isMandatoryCert', title: '是否强制性认证', width: 120 },
+    { key: 'mandatoryCertInfo', title: '强制性认证信息', width: 150 },
     { key: 'serviceProvider', title: '评估服务商', width: 100 },
     { key: 'dataSource', title: '数据来源', width: 100 },
     { key: 'salesErp', title: '采销ERP', width: 100 },
@@ -29,7 +54,6 @@ const commonEndColumns = [
     { key: 'certStatus', title: '强制性认证状态', width: 140 },
     { key: 'productStatus', title: '商品评估状态', width: 120 },
     { key: 'hasOrder', title: '是否产生订单', width: 100 },
-    { key: 'elementStatus', title: '要素状态', width: 100 },
     { key: 'creator', title: '创建人', width: 100 },
     { key: 'salesNote', title: '采销备注', width: 150 },
     { key: 'createTime', title: '创建时间', width: 120 },
@@ -42,64 +66,132 @@ const commonEndColumns = [
 const productTemplates = [
     {
         productName: 'Marluvas 工装鞋 PVC头 700349 CA41370 巴西码37',
-        hscode: '3926909090'
+        hscode: '3926909090',
+        brand: 'Marluvas',
+        model: 'CA41370'
     },
     {
         productName: 'Honeywell 防护耳罩 降噪型 H10A 工业级安全防护',
-        hscode: '8518300000'
+        hscode: '8518300000',
+        brand: 'Honeywell',
+        model: 'H10A'
     },
     {
         productName: '3M 工业电缆 USB3.0 抗干扰型 M8连接器 IP67防护',
-        hscode: '8544429000'
+        hscode: '8544429000',
+        brand: '3M',
+        model: 'M8-USB3.0'
     },
     {
         productName: 'Schneider 工业UPS电源 24V 5000mAh 防爆认证 EX-i',
-        hscode: '8507600000'
+        hscode: '8507600000',
+        brand: 'Schneider',
+        model: 'UPS-24V-5000'
     },
     {
         productName: 'Siemens 工业无线充电模块 Qi标准 IP65防护 24V输出',
-        hscode: '8504403000'
+        hscode: '8504403000',
+        brand: 'Siemens',
+        model: 'QI-24V'
     }
 ];
 
 // 状态选项
 const statusOptions = {
     customsStatus: ['pending-submit', 'pending-confirm', 'confirmed'],
-    certStatus: ['pending-submit', 'submitted', 'confirmed'],
+    certStatus: ['pending-submit', 'submitted'],
     productStatus: ['inactive', 'active'],
     elementStatus: ['pending-submit', 'pending-confirm', 'confirmed'],
     hasOrder: ['是', '否'],
-    isControlled: ['是', '否']
+    isControlled: ['是', '否'],
+    isMandatoryCert: ['是', '否'],
+    brandAuth: ['按项目授权（一单一议）', '按时间授权(期间)', '无需出口授权']
 };
 
+// 智能状态生成器 - 根据业务逻辑生成合理的状态组合
+function generateSmartStatuses(isChina = false, forceElementPending = false) {
+    const customsStatus = getRandomStatus('customsStatus');
+    let certStatus = 'pending-submit';
+    let productStatus = 'inactive';
+    let elementStatus = getRandomStatus('elementStatus');
+    
+    // 如果需要强制生成要素待确认状态的数据
+    if (forceElementPending) {
+        elementStatus = Math.random() > 0.5 ? 'pending-submit' : 'pending-confirm';
+    }
+    
+    // 中国TAB的逻辑：没有认证评估
+    if (isChina) {
+        certStatus = 'confirmed'; // 中国默认认证已确认（因为不需要认证评估）
+        // 商品状态只依赖关务状态
+        if (customsStatus === 'confirmed') {
+            productStatus = 'active';
+        }
+    } else {
+        // 其他国家的逻辑：需要认证评估
+        certStatus = getRandomStatus('certStatus');
+        // 商品状态依赖关务和认证状态
+        if (customsStatus === 'confirmed' && certStatus === 'submitted') {
+            productStatus = 'active';
+        }
+    }
+    
+    return {
+        customsStatus,
+        certStatus,
+        productStatus,
+        elementStatus
+    };
+}
+
 // 数据生成工厂函数
-function generateProductData(countryConfig, count = 5) {
+function generateProductData(countryConfig, count = 5, isChina = false) {
     return Array.from({ length: count }, (_, index) => {
         const template = productTemplates[index % productTemplates.length];
         const baseId = `10000${index + 1}234567${index}`;
         const intlId = `80000${index + 1}234567${index}`;
+        
+        const isControlled = getRandomStatus('isControlled');
+        // 为中国TAB生成更多要素待确认状态的数据
+        const forceElementPending = isChina && index < 3; // 前3条数据强制生成要素待确认状态
+        const statuses = generateSmartStatuses(isChina, forceElementPending);
         
         const baseData = {
             domesticSku: baseId,
             internationalSku: intlId,
             productName: template.productName,
             hscode: template.hscode,
-            isControlled: getRandomStatus('isControlled'),
-            controlInfo: Math.random() > 0.7 ? '需要认证' : '',
-            declarationElements: '-',
-            declarationNameCn: '-',
-            declarationNameEn: '-',
+            brand: template.brand || '未知品牌',
+            model: template.model || 'M' + baseId.slice(-3),
+            brandType: Math.floor(Math.random() * 5), // 随机生成0-4的品牌类型
+            brandAuth: getRandomStatus('brandAuth'), // 从4个枚举值中随机选择
+            isControlled: isControlled,
+            controlInfo: isControlled === '是' ? '存在管制' : '',
+            declarationElements: statuses.elementStatus === 'confirmed' ? 
+                `品牌类型:${Math.floor(Math.random() * 5)}|英文品牌名:${template.brand}|型号:${template.model}|用途:工业用` : '-',
+            declarationNameCn: statuses.elementStatus === 'confirmed' ? 
+                `工业品` : '-',
+            declarationNameEn: statuses.elementStatus === 'confirmed' ? 
+                `${template.brand} ${template.model} Industrial Equipment` : '-',
             deadline: `2024-0${3 + index}-${10 + index * 5}`,
-            customsStatus: getRandomStatus('customsStatus'),
-            certStatus: getRandomStatus('certStatus'),
-            productStatus: getRandomStatus('productStatus'),
-            hasOrder: getRandomStatus('hasOrder'),
-            elementStatus: getRandomStatus('elementStatus'),
+            customsStatus: statuses.customsStatus,
+            certStatus: statuses.certStatus,
+            productStatus: statuses.productStatus,
+            hasOrder: forceElementPending ? '是' : getRandomStatus('hasOrder'),
+            elementStatus: statuses.elementStatus,
             createTime: `2024-01-${15 + index} 09:30:25`,
             updateTime: `2024-01-${20 + index} 14:25:30`,
             ...commonFields,
             ...countryConfig
         };
+        
+        // 只有非中国TAB才添加强制性认证字段
+        if (!isChina) {
+            const isMandatoryCert = getRandomStatus('isMandatoryCert');
+            baseData.isMandatoryCert = isMandatoryCert;
+            baseData.mandatoryCertInfo = isMandatoryCert === '是' ?
+                ['CE认证', '3C认证', 'FCC认证', 'UL认证', 'ISO认证'][Math.floor(Math.random() * 5)] : '';
+        }
 
         return baseData;
     });
@@ -112,12 +204,13 @@ function getRandomStatus(type) {
 }
 
 // 列配置生成器
-function generateColumns(countrySpecificColumns, hscodeName) {
+function generateColumns(countrySpecificColumns, hscodeName, isChina = false) {
+    const endColumns = isChina ? chinaEndColumns : otherCountryEndColumns;
     return [
         ...commonColumns,
         { key: 'hscode', title: hscodeName, width: 120 },
         ...countrySpecificColumns,
-        ...commonEndColumns
+        ...endColumns
     ];
 }
 
@@ -234,7 +327,10 @@ const tableColumns = {};
 
 Object.keys(countryConfigs).forEach(country => {
     const config = processConfig(countryConfigs[country]);
-    staticMockData[country] = generateProductData(config);
+    const isChina = country === 'china';
+    
+    // 传递isChina参数给数据生成函数
+    staticMockData[country] = generateProductData(config, 5, isChina);
     
     const hscodeName = {
         china: '中国HSCODE',
@@ -246,9 +342,11 @@ Object.keys(countryConfigs).forEach(country => {
         malaysia: '马来HSCODE'
     }[country];
     
+    // 中国使用包含要素状态的列配置，其他国家不包含要素状态
     tableColumns[country] = generateColumns(
         countrySpecificColumns[country] || [],
-        hscodeName
+        hscodeName,
+        isChina
     );
 });
 
