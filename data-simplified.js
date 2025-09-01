@@ -15,6 +15,7 @@ const commonColumns = [
     { key: 'checkbox', title: '', fixed: 'left', width: 50, checkbox: true },
     { key: 'domesticSku', title: '国内SKU', fixed: 'left', width: 120 },
     { key: 'internationalSku', title: '国际SKU', width: 120 },
+    { key: 'productImage', title: '图片', width: 80 },
     { key: 'productName', title: '商品中文名称', width: 200 },
 ];
 
@@ -41,7 +42,7 @@ const chinaEndColumns = [
     { key: 'actions', title: '操作', fixed: 'right', width: 80 }
 ];
 
-// 其他国家的列配置（不包含要素状态，包含强制性认证）
+// 其他国家的列配置（包含申报品名和要素状态）
 const otherCountryEndColumns = [
     { key: 'isControlled', title: '是否管制', width: 80 },
     { key: 'controlInfo', title: '管制信息', width: 150 },
@@ -56,6 +57,9 @@ const otherCountryEndColumns = [
     { key: 'productStatus', title: '商品评估状态', width: 120 },
     { key: 'hasOrder', title: '是否产生订单', width: 100 },
     { key: 'firstOrderTime', title: '首次产生订单时间', width: 140 },
+    { key: 'declarationNameEn', title: '申报英文品名', width: 150 },
+    { key: 'declarationNameLocal', title: '申报当地品名', width: 150 },
+    { key: 'elementStatus', title: '要素状态', width: 100 },
     { key: 'creator', title: '创建人', width: 100 },
     { key: 'salesNote', title: '采销备注', width: 150 },
     { key: 'createTime', title: '创建时间', width: 120 },
@@ -68,35 +72,86 @@ const otherCountryEndColumns = [
 const productTemplates = [
     {
         productName: 'Marluvas 工装鞋 PVC头 700349 CA41370 巴西码37',
+        productNameEn: 'Marluvas Work Shoes PVC Head 700349 CA41370 Brazil Size 37',
         hscode: '3926909090',
         brand: 'Marluvas',
         model: 'CA41370'
     },
     {
         productName: 'Honeywell 防护耳罩 降噪型 H10A 工业级安全防护',
+        productNameEn: 'Honeywell Protective Earmuffs Noise Reduction H10A Industrial Safety',
         hscode: '8518300000',
         brand: 'Honeywell',
         model: 'H10A'
     },
     {
         productName: '3M 工业电缆 USB3.0 抗干扰型 M8连接器 IP67防护',
+        productNameEn: '3M Industrial Cable USB3.0 Anti-interference M8 Connector IP67 Protection',
         hscode: '8544429000',
         brand: '3M',
         model: 'M8-USB3.0'
     },
     {
         productName: 'Schneider 工业UPS电源 24V 5000mAh 防爆认证 EX-i',
+        productNameEn: 'Schneider Industrial UPS Power 24V 5000mAh Explosion-proof Certified EX-i',
         hscode: '8507600000',
         brand: 'Schneider',
         model: 'UPS-24V-5000'
     },
     {
         productName: 'Siemens 工业无线充电模块 Qi标准 IP65防护 24V输出',
+        productNameEn: 'Siemens Industrial Wireless Charging Module Qi Standard IP65 Protection 24V Output',
         hscode: '8504403000',
         brand: 'Siemens',
         model: 'QI-24V'
     }
 ];
+
+// 各国语种名称映射
+const localizedProductNames = {
+    thailand: [
+        'รองเท้าทำงาน Marluvas หัว PVC 700349 CA41370 ไซส์บราซิล 37',
+        'ที่ปิดหูป้องกัน Honeywell ลดเสียงรบกวน H10A ระดับอุตสาหกรรม',
+        'สายเคเบิลอุตสาหกรรม 3M USB3.0 ป้องกันสัญญาณรบกวน ขั้วต่อ M8 ป้องกัน IP67',
+        'แหล่งจ่ายไฟ UPS อุตสาหกรรม Schneider 24V 5000mAh ได้รับการรับรองป้องกันการระเบิด EX-i',
+        'โมดูลชาร์จไร้สาย Siemens อุตสาหกรรม มาตรฐาน Qi ป้องกัน IP65 เอาท์พุท 24V'
+    ],
+    indonesia: [
+        'Sepatu Kerja Marluvas Kepala PVC 700349 CA41370 Ukuran Brasil 37',
+        'Penutup Telinga Pelindung Honeywell Peredam Bising H10A Tingkat Industri',
+        'Kabel Industri 3M USB3.0 Anti Interferensi Konektor M8 Perlindungan IP67',
+        'Sumber Daya UPS Industri Schneider 24V 5000mAh Bersertifikat Tahan Ledakan EX-i',
+        'Modul Pengisian Nirkabel Industri Siemens Standar Qi Perlindungan IP65 Output 24V'
+    ],
+    hungary: [
+        'Marluvas Munkacipő PVC Fejjel 700349 CA41370 Brazil Méret 37',
+        'Honeywell Védő Fülvédő Zajcsökkentő H10A Ipari Szintű',
+        '3M Ipari Kábel USB3.0 Interferencia Ellen M8 Csatlakozó IP67 Védelem',
+        'Schneider Ipari UPS Tápegység 24V 5000mAh Robbanásbiztos Tanúsított EX-i',
+        'Siemens Ipari Vezeték Nélküli Töltő Modul Qi Szabvány IP65 Védelem 24V Kimenet'
+    ],
+    brazil: [
+        'Sapato de Trabalho Marluvas Cabeça PVC 700349 CA41370 Tamanho Brasil 37',
+        'Protetor Auricular Honeywell Redutor de Ruído H10A Nível Industrial',
+        'Cabo Industrial 3M USB3.0 Anti Interferência Conector M8 Proteção IP67',
+        'Fonte UPS Industrial Schneider 24V 5000mAh Certificado à Prova de Explosão EX-i',
+        'Módulo de Carregamento Sem Fio Industrial Siemens Padrão Qi Proteção IP65 Saída 24V'
+    ],
+    vietnam: [
+        'Giày Công Việc Marluvas Đầu PVC 700349 CA41370 Cỡ Brazil 37',
+        'Nút Tai Bảo Vệ Honeywell Giảm Tiếng Ồn H10A Cấp Công Nghiệp',
+        'Cáp Công Nghiệp 3M USB3.0 Chống Nhiễu Kết Nối M8 Bảo Vệ IP67',
+        'Nguồn UPS Công Nghiệp Schneider 24V 5000mAh Chứng Nhận Chống Nổ EX-i',
+        'Module Sạc Không Dây Công Nghiệp Siemens Tiêu Chuẩn Qi Bảo Vệ IP65 Đầu Ra 24V'
+    ],
+    malaysia: [
+        'Kasut Kerja Marluvas Kepala PVC 700349 CA41370 Saiz Brazil 37',
+        'Penutup Telinga Pelindung Honeywell Pengurangan Bunyi H10A Gred Industri',
+        'Kabel Industri 3M USB3.0 Anti Gangguan Penyambung M8 Perlindungan IP67',
+        'Bekalan Kuasa UPS Industri Schneider 24V 5000mAh Diperakui Kalis Letupan EX-i',
+        'Modul Pengecasan Tanpa Wayar Industri Siemens Piawaian Qi Perlindungan IP65 Output 24V'
+    ]
+};
 
 // 状态选项
 const statusOptions = {
@@ -146,8 +201,22 @@ function generateSmartStatuses(isChina = false, forceElementPending = false) {
     };
 }
 
+// 生成当地语言申报品名
+function getLocalizedDeclarationName(countryKey, template) {
+    const localizedNames = {
+        thailand: `อุปกรณ์อุตสาหกรรม ${template.brand} ${template.model}`,
+        indonesia: `Peralatan Industri ${template.brand} ${template.model}`,
+        hungary: `Ipari Berendezés ${template.brand} ${template.model}`,
+        brazil: `Equipamento Industrial ${template.brand} ${template.model}`,
+        vietnam: `Thiết bị Công nghiệp ${template.brand} ${template.model}`,
+        malaysia: `Peralatan Industri ${template.brand} ${template.model}`
+    };
+    
+    return localizedNames[countryKey] || `${template.brand} ${template.model} Industrial Equipment`;
+}
+
 // 数据生成工厂函数
-function generateProductData(countryConfig, count = 5, isChina = false) {
+function generateProductData(countryConfig, count = 5, isChina = false, countryKey = '') {
     return Array.from({ length: count }, (_, index) => {
         const template = productTemplates[index % productTemplates.length];
         const baseId = `10000${index + 1}234567${index}`;
@@ -161,6 +230,7 @@ function generateProductData(countryConfig, count = 5, isChina = false) {
         const baseData = {
             domesticSku: baseId,
             internationalSku: intlId,
+            productImage: `placeholder-${index + 1}.jpg`, // 添加图片占位符
             productName: template.productName,
             hscode: template.hscode,
             brand: template.brand || '未知品牌',
@@ -175,11 +245,23 @@ function generateProductData(countryConfig, count = 5, isChina = false) {
                 `工业品` : '',
             declarationNameEn: (statuses.elementStatus === 'confirmed' || statuses.elementStatus === 'pending-confirm') ? 
                 `${template.brand} ${template.model} Industrial Equipment` : '',
+            declarationNameLocal: (statuses.elementStatus === 'confirmed' || statuses.elementStatus === 'pending-confirm') ? 
+                getLocalizedDeclarationName(countryKey, template) : '',
             deadline: `2024-0${3 + index}-${10 + index * 5}`,
             customsStatus: statuses.customsStatus,
             certStatus: statuses.certStatus,
             productStatus: statuses.productStatus,
         };
+        
+        // 为非中国TAB添加英文和当地语种名称
+        if (!isChina) {
+            baseData.productNameEn = template.productNameEn || `${template.brand} ${template.model} Product`;
+            if (countryKey && localizedProductNames[countryKey]) {
+                baseData.productNameLocal = localizedProductNames[countryKey][index % localizedProductNames[countryKey].length];
+            } else {
+                baseData.productNameLocal = template.productNameEn || `${template.brand} ${template.model} Product`;
+            }
+        }
         
         // 先确定是否产生订单
         const hasOrderValue = forceElementPending ? '是' : getRandomStatus('hasOrder');
@@ -216,10 +298,47 @@ function getRandomStatus(type) {
 }
 
 // 列配置生成器
-function generateColumns(countrySpecificColumns, hscodeName, isChina = false) {
-    const endColumns = isChina ? chinaEndColumns : otherCountryEndColumns;
+function generateColumns(countrySpecificColumns, hscodeName, isChina = false, countryName = '') {
+    let endColumns;
+    if (isChina) {
+        endColumns = chinaEndColumns;
+    } else {
+        // 为非中国国家动态创建列配置，申报当地品名根据国家命名
+        endColumns = [
+            { key: 'isControlled', title: '是否管制', width: 80 },
+            { key: 'controlInfo', title: '管制信息', width: 150 },
+            { key: 'isMandatoryCert', title: '是否强制性认证', width: 120 },
+            { key: 'mandatoryCertInfo', title: '强制性认证信息', width: 150 },
+            { key: 'serviceProvider', title: '评估服务商', width: 100 },
+            { key: 'dataSource', title: '数据来源', width: 100 },
+            { key: 'salesErp', title: '采销ERP', width: 100 },
+            { key: 'deadline', title: '评估截止时间', width: 120 },
+            { key: 'customsStatus', title: '关务评估状态', width: 120 },
+            { key: 'certStatus', title: '强制性认证状态', width: 140 },
+            { key: 'productStatus', title: '商品评估状态', width: 120 },
+            { key: 'hasOrder', title: '是否产生订单', width: 100 },
+            { key: 'firstOrderTime', title: '首次产生订单时间', width: 140 },
+            { key: 'declarationNameEn', title: '申报英文品名', width: 150 },
+            { key: 'declarationNameLocal', title: `申报${countryName}品名`, width: 150 },
+            { key: 'elementStatus', title: '要素状态', width: 100 },
+            { key: 'creator', title: '创建人', width: 100 },
+            { key: 'salesNote', title: '采销备注', width: 150 },
+            { key: 'createTime', title: '创建时间', width: 120 },
+            { key: 'updater', title: '更新人', width: 100 },
+            { key: 'updateTime', title: '更新时间', width: 120 },
+            { key: 'actions', title: '操作', fixed: 'right', width: 80 }
+        ];
+    }
+    
+    // 为非中国TAB添加商品英文名称和当地语种名称列
+    const nameColumns = isChina ? [] : [
+        { key: 'productNameEn', title: '商品英文名称', width: 180 },
+        { key: 'productNameLocal', title: `商品${countryName}名称`, width: 180 }
+    ];
+    
     return [
         ...commonColumns,
+        ...nameColumns,
         { key: 'hscode', title: hscodeName, width: 120 },
         ...countrySpecificColumns,
         ...endColumns
@@ -230,7 +349,7 @@ function generateColumns(countrySpecificColumns, hscodeName, isChina = false) {
 const countryConfigs = {
     china: {
         exportTaxRate: 13,
-        exportTariffRate: 0
+        exportTariffRate:  () => Math.floor(Math.random() * 20),
     },
     thailand: {
         mfnRate: () => Math.floor(Math.random() * 20),
@@ -337,12 +456,23 @@ function processConfig(config) {
 const staticMockData = {};
 const tableColumns = {};
 
+// 国家名称映射
+const countryNameMap = {
+    china: '中文',
+    thailand: '泰语',
+    indonesia: '印尼语',
+    hungary: '匈牙利语', 
+    brazil: '葡萄牙语',
+    vietnam: '越南语',
+    malaysia: '马来语'
+};
+
 Object.keys(countryConfigs).forEach(country => {
     const config = processConfig(countryConfigs[country]);
     const isChina = country === 'china';
     
-    // 传递isChina参数给数据生成函数
-    staticMockData[country] = generateProductData(config, 5, isChina);
+    // 传递isChina和countryKey参数给数据生成函数
+    staticMockData[country] = generateProductData(config, 5, isChina, country);
     
     const hscodeName = {
         china: '中国HSCODE',
@@ -358,7 +488,8 @@ Object.keys(countryConfigs).forEach(country => {
     tableColumns[country] = generateColumns(
         countrySpecificColumns[country] || [],
         hscodeName,
-        isChina
+        isChina,
+        countryNameMap[country] || '当地语种'
     );
 });
 

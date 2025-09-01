@@ -523,9 +523,10 @@ body {
 .data-table th,
 .data-table td {
     padding: 12px 8px;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid #e0e0e0;
     white-space: nowrap;
+    vertical-align: middle;
 }
 
 .data-table th {
@@ -534,6 +535,8 @@ body {
     position: sticky;
     top: 0;
     z-index: 10;
+    vertical-align: middle;
+    text-align: center;
 }
 
 .data-table .fixed-column {
@@ -578,8 +581,8 @@ body {
 }
 
 /* 商品中文名称列样式 */
-.data-table th:nth-child(4),
-.data-table td:nth-child(4) {
+.data-table th:nth-child(5),
+.data-table td:nth-child(5) {
     max-width: 150px;
     min-width: 180px;
     white-space: normal;
@@ -589,9 +592,85 @@ body {
     vertical-align: middle;
 }
 
+/* 商品图片列样式 */
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    text-align: center;
+    vertical-align: middle;
+    padding: 8px 4px;
+}
+
+.product-image-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px;
+    border: 1px dashed #d9d9d9;
+    border-radius: 4px;
+    background-color: #fafafa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    max-width: 50px;
+    margin: 0 auto;
+}
+
+.product-image-placeholder:hover {
+    border-color: #1890ff;
+    background-color: #f0f8ff;
+}
+
+.product-image-placeholder .image-icon {
+    font-size: 16px;
+    color: #999;
+}
+
+.product-image-placeholder .image-text {
+    font-size: 10px;
+    color: #999;
+    line-height: 1;
+}
+
+/* 针对特定位置的英文和本地语种名称列 */
+.data-table th[data-key="productNameEn"],
+.data-table td[data-key="productNameEn"],
+/* 商品英文名称和当地语种名称列样式 */
+.data-table .product-name-en,
+.data-table .product-name-local {
+    max-width: 200px !important;
+    min-width: 200px;
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.4;
+    vertical-align: middle;
+    padding: 8px 6px;
+} 
+
+/* 针对特定位置的英文和本地语种名称列 */
+.data-table th[data-key="productNameEn"],
+.data-table td[data-key="productNameEn"],
+.data-table th[data-key="productNameLocal"],
+.data-table td[data-key="productNameLocal"] {
+    max-width: 200px !important;
+    min-width: 200px;
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.4;
+    vertical-align: middle;
+    padding: 8px 6px;
+}
+
 /* 数值列样式 */
 .data-table .numeric {
-    text-align: right;
+    text-align: center;
+    vertical-align: middle;
 }
 
 .data-table .percentage::after {
@@ -970,6 +1049,29 @@ body {
 }
 
 .control-no {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* 强制性认证状态样式 */
+.cert-status {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+    min-width: 30px;
+    text-align: center;
+}
+
+.cert-yes {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.cert-no {
     background-color: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;

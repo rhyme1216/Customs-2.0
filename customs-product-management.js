@@ -534,14 +534,24 @@ function generateActionButtons(row) {
         }
     }
     
-    // 4. 要素编辑按钮逻辑（只在中国TAB显示）
+    // 4. 要素编辑按钮逻辑
     if (isChina) {
+        // 中国TAB：显示完整版编辑要素功能
         if (elementStatus === 'pending-submit' || elementStatus === 'pending-confirm') {
             // 待提交或待确认状态：显示编辑要素按钮
             buttons.push(`<a href="javascript:void(0)" class="action-btn element-btn" onclick="performElementEdit('${row.domesticSku}')">编辑要素</a>`);
         } else if (elementStatus === 'confirmed') {
             // 已确认状态：可以重新编辑（后续编辑，需要调整原因）
             buttons.push(`<a href="javascript:void(0)" class="action-btn element-btn secondary" onclick="performElementEdit('${row.domesticSku}', true)">编辑要素</a>`);
+        }
+    } else {
+        // 非中国TAB：显示简化版编辑要素功能
+        if (elementStatus === 'pending-submit' || elementStatus === 'pending-confirm') {
+            // 待提交或待确认状态：显示编辑要素按钮
+            buttons.push(`<a href="javascript:void(0)" class="action-btn element-btn" onclick="performSimpleElementEdit('${row.domesticSku}')">编辑要素</a>`);
+        } else if (elementStatus === 'confirmed') {
+            // 已确认状态：可以重新编辑（后续编辑，需要调整原因）
+            buttons.push(`<a href="javascript:void(0)" class="action-btn element-btn secondary" onclick="performSimpleElementEdit('${row.domesticSku}', true)">编辑要素</a>`);
         }
     }
     
@@ -619,18 +629,36 @@ function renderTableData(response) {
                 classes.push('numeric');
             }
             
+            // 为商品英文名称和当地语种名称列添加特殊样式类
+            if (header.key === 'productNameEn') {
+                classes.push('product-name-en');
+            } else if (header.key === 'productNameLocal') {
+                classes.push('product-name-local');
+            }
+            
             // 特殊处理某些列的显示
             if (header.checkbox) {
                 cellContent = `<input type="checkbox" class="row-checkbox" value="${row.domesticSku}">`;
             } else if (header.key === 'domesticSku') {
                 // 国内SKU显示为蓝色链接样式
                 cellContent = `<a href="javascript:void(0)" class="sku-link" onclick="viewProductDetail('${row.domesticSku}')">${cellContent}</a>`;
+
+            } else if (header.key === 'productImage') {
+                // 图片列显示预览占位符
+                cellContent = `<div class="product-image-placeholder">
+                    <div class="image-icon">🔍</div>
+                    <div class="image-text">预览</div>
+                </div>`;
             } else if (header.key === 'actions') {
                 cellContent = generateActionButtons(row);
             } else if (header.key === 'isControlled') {
                 cellContent = cellContent === '是' ?
                     '<span class="control-status control-yes">是</span>' :
                     '<span class="control-status control-no">否</span>';
+            } else if (header.key === 'isMandatoryCert') {
+                cellContent = cellContent === '是' ?
+                    '<span class="cert-status cert-yes">是</span>' :
+                    '<span class="cert-status cert-no">否</span>';
             } else if (header.key === 'hasOrder') {
                 // 处理"是否产生订单"字段的中文显示
                 if (cellContent === '是') {
@@ -649,6 +677,20 @@ function renderTableData(response) {
                 }
             } else if (header.key === 'declarationNameCn') {
                 // 申报中文品名：要素状态为已确认或待确认时才显示
+                if ((row.elementStatus === 'confirmed' || row.elementStatus === 'pending-confirm') && cellContent && cellContent !== '-') {
+                    cellContent = `<span class="declaration-name">${cellContent}</span>`;
+                } else {
+                    cellContent = '-';
+                }
+            } else if (header.key === 'declarationNameEn') {
+                // 申报英文品名：要素状态为已确认或待确认时才显示
+                if ((row.elementStatus === 'confirmed' || row.elementStatus === 'pending-confirm') && cellContent && cellContent !== '-') {
+                    cellContent = `<span class="declaration-name">${cellContent}</span>`;
+                } else {
+                    cellContent = '-';
+                }
+            } else if (header.key === 'declarationNameLocal') {
+                // 申报当地品名：要素状态为已确认或待确认时才显示
                 if ((row.elementStatus === 'confirmed' || row.elementStatus === 'pending-confirm') && cellContent && cellContent !== '-') {
                     cellContent = `<span class="declaration-name">${cellContent}</span>`;
                 } else {
@@ -962,6 +1004,13 @@ function switchCountryTab(country) {
             }
             if (header.numeric) {
                 classes.push('numeric');
+            }
+            
+            // 为商品英文名称和当地语种名称列添加特殊样式类
+            if (header.key === 'productNameEn') {
+                classes.push('product-name-en');
+            } else if (header.key === 'productNameLocal') {
+                classes.push('product-name-local');
             }
             
             // 特殊处理复选框列
@@ -1727,6 +1776,13 @@ function updateTableHeader() {
             classes.push('numeric');
         }
         
+        // 为商品英文名称和当地语种名称列添加特殊样式类
+        if (header.key === 'productNameEn') {
+            classes.push('product-name-en');
+        } else if (header.key === 'productNameLocal') {
+            classes.push('product-name-local');
+        }
+        
         // 特殊处理复选框列
         if (header.checkbox) {
             headerHtml += `<th class="${classes.join(' ')}">
@@ -2043,6 +2099,20 @@ function savePendingConfirm() {
     
     // 获取申报中文品名
     const declareNameCn = document.getElementById('modal-declare-name').value.trim();
+    
+    // 获取品牌授权情况
+    const brandAuth = document.getElementById('modal-brand-auth').value.trim();
+    
+    // 验证必填字段
+    if (!declareNameCn) {
+        alert('请填写申报中文品名');
+        return;
+    }
+    
+    if (!brandAuth) {
+        alert('请选择品牌授权情况');
+        return;
+    }
     
     // 获取品牌类型
     const brandType = document.getElementById('element-brandType').value;
@@ -2398,6 +2468,16 @@ function saveElementEdit() {
         declareNameInput.style.borderColor = '#d9d9d9';
     }
     
+    // 验证品牌授权情况
+    const brandAuthInput = document.getElementById('modal-brand-auth');
+    if (!brandAuthInput.value.trim()) {
+        brandAuthInput.style.borderColor = '#ff4d4f';
+        showErrorMessage('请选择品牌授权情况');
+        return;
+    } else {
+        brandAuthInput.style.borderColor = '#d9d9d9';
+    }
+    
     // 验证必填项
     const requiredFields = document.querySelectorAll('#required-fields input[required], #required-fields select[required]');
     let hasError = false;
@@ -2436,6 +2516,7 @@ function saveElementEdit() {
         domesticSku: currentEditingProduct.domesticSku,
         elementString: elementString,
         declareNameCn: declareNameCn,
+        brandAuth: brandAuth,
         brandType: brandType,
         preferentialCountries: selectedCountries
     });
@@ -2532,4 +2613,171 @@ function performElementEdit(domesticSku, isSubsequent = false) {
     
     // 打开编辑弹窗
     openElementEditModal(productData);
+}
+
+// ==================== 简化版编辑要素功能（用于非中国国家） ====================
+
+/**
+ * 获取当前选中的国家
+ */
+function getCurrentSelectedCountry() {
+    return currentCountry;
+}
+
+/**
+ * 执行简化版要素编辑（非中国国家用）
+ */
+function performSimpleElementEdit(domesticSku, isSubsequent = false) {
+    console.log(`执行简化版要素编辑: ${domesticSku}, 是否后续编辑: ${isSubsequent}`);
+    
+    // 获取商品数据
+    const productData = getCurrentRowData(domesticSku);
+    if (!productData) {
+        console.error('未找到商品数据:', domesticSku);
+        return;
+    }
+    
+    // 打开简化版编辑要素弹窗
+    showSimpleElementEditModal(productData, isSubsequent);
+}
+
+/**
+ * 显示简化版编辑要素弹窗
+ */
+function showSimpleElementEditModal(productData, isSubsequent = false) {
+    // 获取当前选中的国家
+    const currentCountry = getCurrentSelectedCountry();
+    const countryNames = {
+        'thailand': '泰语',
+        'indonesia': '印尼语',
+        'vietnam': '越南语',
+        'malaysia': '马来语',
+        'hungary': '匈牙利语',
+        'brazil': '葡萄牙语'
+    };
+    
+    const localLanguageName = countryNames[currentCountry] || '当地语';
+    
+    // 填充商品信息
+    document.getElementById('simple-modal-domestic-sku').textContent = productData.domesticSku;
+    document.getElementById('simple-modal-international-sku').textContent = productData.internationalSku || '-';
+    document.getElementById('simple-modal-product-name').textContent = productData.productNameCn || '-';
+    document.getElementById('simple-modal-product-name-en').textContent = productData.productNameEn || '-';
+    document.getElementById('simple-modal-product-name-local').textContent = productData.productNameLocal || '-';
+    document.getElementById('simple-modal-hscode').textContent = productData.chinaHscode || '-';
+    document.getElementById('simple-modal-brand').textContent = productData.brand || '-';
+    document.getElementById('simple-modal-model').textContent = productData.model || '-';
+    document.getElementById('simple-modal-brand-auth-display').textContent = productData.brandAuth || '-';
+    document.getElementById('simple-modal-brand-type-display').textContent = productData.brandType || '-';
+    
+    // 动态更新当地品名标签和占位符
+    const localNameLabel = document.querySelector('label[for="simple-modal-declare-name-local"]');
+    const localNameInput = document.getElementById('simple-modal-declare-name-local');
+    if (localNameLabel) {
+        localNameLabel.textContent = `申报${localLanguageName}品名：`;
+    }
+    if (localNameInput) {
+        localNameInput.placeholder = `请输入申报${localLanguageName}品名`;
+    }
+    
+    // 清空输入框
+    document.getElementById('simple-modal-declare-name-en').value = '';
+    document.getElementById('simple-modal-declare-name-local').value = '';
+    
+    // 设置当前编辑的商品数据
+    window.currentSimpleEditingProduct = productData;
+    window.currentSimpleEditingIsSubsequent = isSubsequent;
+    
+    // 显示弹窗
+    document.getElementById('element-edit-modal-simple').style.display = 'flex';
+}
+
+/**
+ * 关闭简化版编辑要素弹窗
+ */
+function closeSimpleElementEditModal() {
+    document.getElementById('element-edit-modal-simple').style.display = 'none';
+    window.currentSimpleEditingProduct = null;
+    window.currentSimpleEditingIsSubsequent = false;
+}
+
+/**
+ * 放弃简化版要素编辑
+ */
+function abandonSimpleElementEdit() {
+    if (confirm('确定要放弃编辑吗？')) {
+        closeSimpleElementEditModal();
+    }
+}
+
+/**
+ * 保存简化版待确认
+ */
+function saveSimplePendingConfirm() {
+    if (!window.currentSimpleEditingProduct) {
+        alert('没有找到当前编辑的商品信息');
+        return;
+    }
+    
+    // 获取输入的品名信息
+    const declareNameEn = document.getElementById('simple-modal-declare-name-en').value.trim();
+    const declareNameLocal = document.getElementById('simple-modal-declare-name-local').value.trim();
+    
+    console.log('保存简化版待确认:', {
+        domesticSku: window.currentSimpleEditingProduct.domesticSku,
+        declareNameEn: declareNameEn,
+        declareNameLocal: declareNameLocal
+    });
+    
+    // 更新当前数据中的申报品名
+    const currentData = getCurrentData();
+    const targetProduct = currentData.find(item => item.domesticSku === window.currentSimpleEditingProduct.domesticSku);
+    if (targetProduct) {
+        targetProduct.declarationNameEn = declareNameEn;
+        targetProduct.declarationNameLocal = declareNameLocal;
+        targetProduct.elementStatus = 'pending-confirm'; // 更新要素状态为待确认
+    }
+    
+    // 模拟保存成功
+    alert('保存待确认成功！');
+    closeSimpleElementEditModal();
+    
+    // 刷新表格显示
+    refreshCurrentView();
+}
+
+/**
+ * 确认简化版要素
+ */
+function confirmSimpleElement() {
+    if (!window.currentSimpleEditingProduct) {
+        alert('没有找到当前编辑的商品信息');
+        return;
+    }
+    
+    // 获取输入的品名信息
+    const declareNameEn = document.getElementById('simple-modal-declare-name-en').value.trim();
+    const declareNameLocal = document.getElementById('simple-modal-declare-name-local').value.trim();
+    
+    console.log('确认简化版要素:', {
+        domesticSku: window.currentSimpleEditingProduct.domesticSku,
+        declareNameEn: declareNameEn,
+        declareNameLocal: declareNameLocal
+    });
+    
+    // 更新当前数据中的申报品名
+    const currentData = getCurrentData();
+    const targetProduct = currentData.find(item => item.domesticSku === window.currentSimpleEditingProduct.domesticSku);
+    if (targetProduct) {
+        targetProduct.declarationNameEn = declareNameEn;
+        targetProduct.declarationNameLocal = declareNameLocal;
+        targetProduct.elementStatus = 'confirmed'; // 更新要素状态为已确认
+    }
+    
+    // 模拟确认成功
+    alert('要素确认成功！');
+    closeSimpleElementEditModal();
+    
+    // 刷新表格显示
+    refreshCurrentView();
 }
