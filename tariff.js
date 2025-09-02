@@ -14,6 +14,7 @@ const countryConfig = {
             { key: 'tax_rate', title: '中国退税率', type: 'percentage' },
             { key: 'is_controlled', title: '是否管制', type: 'control' },
             { key: 'control_info', title: '管制信息' },
+            { key: 'declaration_elements', title: '申报要素' },
             { key: 'updated_by', title: '最后更新人' },
             { key: 'updated_time', title: '最后更新时间' },
             { key: 'action', title: '操作', fixed: true }
@@ -119,11 +120,11 @@ const countryConfig = {
 // 模拟数据（基于CSV文件内容）
 const mockData = {
     china: [
-        {hscode: '8515900090', tax_rate: '13.0', is_controlled: '否', control_info: '', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:15'},
-        {hscode: '7326901990', tax_rate: '13.0', is_controlled: '否', control_info: '', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:16'},
-        {hscode: '8425190000', tax_rate: '13.0', is_controlled: '否', control_info: '', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:17'},
-        {hscode: '8205400090', tax_rate: '13.0', is_controlled: '否', control_info: '', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:18'},
-        {hscode: '3919909090', tax_rate: '13.0', is_controlled: '是', control_info: '禁止出口！', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:19'}
+        {hscode: '8515900090', tax_rate: '13.0', tariff_rate: '0.0', is_controlled: '否', control_info: '', remarks: '', declaration_elements: '1:品牌类型;2:出口享惠情况;3:是否改良种用;4:品种;5:GTIN;6:CAS;7:其他', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:15'},
+        {hscode: '7326901990', tax_rate: '13.0', tariff_rate: '5.0', is_controlled: '否', control_info: '', remarks: '', declaration_elements: '1:品牌类型;2:出口享惠情况;5:GTIN;6:CAS;7:其他', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:16'},
+        {hscode: '8425190000', tax_rate: '13.0', tariff_rate: '0.0', is_controlled: '否', control_info: '', remarks: '特殊商品', declaration_elements: '1:品牌类型;2:出口享惠情况;5:GTIN;6:CAS;7:其他', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:17'},
+        {hscode: '8205400090', tax_rate: '13.0', tariff_rate: '10.0', is_controlled: '否', control_info: '', remarks: '', declaration_elements: '1:品牌类型;2:出口享惠情况;3:是否改良种用;4:品种;5:GTIN;6:CAS;7:其他', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:18'},
+        {hscode: '3919909090', tax_rate: '13.0', tariff_rate: '15.0', is_controlled: '是', control_info: '禁止出口！', remarks: '需要特殊审批', declaration_elements: '1:品牌类型;2:出口享惠情况;5:GTIN;6:CAS;7:其他', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:32:19'}
     ],
     thailand: [
         {hscode: '84671100000', mfn_rate: '0', form_e: '0', vat: '7.0', excise_tax: '0', local_tax: '0', anti_dumping: '0', is_controlled: '否', control_info: '', updated_by: 'lizimeng16', updated_time: '2025-8-25 14:33:10'},
@@ -289,6 +290,15 @@ function renderTable() {
             } else if (col.type === 'control') {
                 const isControlled = row[col.key] === '是';
                 content = `<span class="control-status ${isControlled ? 'control-yes' : 'control-no'}">${row[col.key] || '否'}</span>`;
+            } else if (col.key === 'declaration_elements') {
+                // 申报要素字段特殊处理，将分号分隔的内容格式化显示
+                const elements = row[col.key] || '';
+                if (elements) {
+                    const elementList = elements.split(';').map(item => item.trim()).filter(item => item);
+                    content = `<div class="declaration-elements">${elementList.join('<br>')}</div>`;
+                } else {
+                    content = '-';
+                }
             } else {
                 content = row[col.key] || '';
             }
@@ -362,7 +372,11 @@ function batchOperation() {
 // 编辑记录
 function editRow(index) {
     const row = filteredData[index];
-    alert(`编辑记录: ${row.hscode}`);
+    if (currentCountry === 'china') {
+        openChinaEditModal(row);
+    } else {
+        alert(`编辑记录: ${row.hscode}`);
+    }
 }
 
 // 上一页
@@ -399,4 +413,242 @@ function jumpToPage() {
         alert(`请输入1-${totalPages}之间的页码`);
         pageInput.focus();
     }
+}
+
+// 中国HSCODE编辑相关功能
+let currentEditingRow = null;
+let currentDeclarationElements = [];
+
+// 打开中国HSCODE编辑弹窗
+function openChinaEditModal(row) {
+    currentEditingRow = row;
+    
+    // 填充基本信息
+    document.getElementById('edit-hscode').textContent = row.hscode;
+    document.getElementById('edit-update-time').textContent = row.updated_time;
+    
+    // 填充税率信息
+    document.getElementById('edit-tax-rate').value = row.tax_rate || '';
+    document.getElementById('edit-tariff-rate').value = row.tariff_rate || '';
+    
+    // 填充管制信息
+    document.getElementById('edit-is-controlled').value = row.is_controlled || '否';
+    document.getElementById('edit-control-info').value = row.control_info || '';
+    document.getElementById('edit-remarks').value = row.remarks || '';
+    
+    // 处理管制信息显示逻辑
+    toggleControlInfo();
+    
+    // 初始化申报要素配置
+    initDeclarationElements(row.declaration_elements || '');
+    
+    // 显示弹窗
+    document.getElementById('china-edit-modal').style.display = 'flex';
+}
+
+// 关闭中国HSCODE编辑弹窗
+function closeChinaEditModal() {
+    document.getElementById('china-edit-modal').style.display = 'none';
+    currentEditingRow = null;
+    currentDeclarationElements = [];
+}
+
+// 切换管制信息显示
+function toggleControlInfo() {
+    const isControlled = document.getElementById('edit-is-controlled').value;
+    const controlInfoGroup = document.getElementById('control-info-group');
+    
+    if (isControlled === '是') {
+        controlInfoGroup.style.display = 'block';
+        document.getElementById('edit-control-info').required = true;
+    } else {
+        controlInfoGroup.style.display = 'none';
+        document.getElementById('edit-control-info').required = false;
+        document.getElementById('edit-control-info').value = '';
+    }
+}
+
+// 初始化申报要素配置
+function initDeclarationElements(elementsString) {
+    // 固定的前两项和后三项
+    const fixedElements = [
+        { id: 1, name: '品牌类型', required: true, fixed: true },
+        { id: 2, name: '出口享惠情况', required: true, fixed: true },
+        { id: -3, name: 'GTIN', required: false, fixed: true },
+        { id: -2, name: 'CAS', required: false, fixed: true },
+        { id: -1, name: '其他', required: false, fixed: true }
+    ];
+    
+    // 解析现有的申报要素
+    const existingElements = [];
+    if (elementsString) {
+        const elements = elementsString.split(';');
+        elements.forEach(element => {
+            const [idPart, name] = element.split(':');
+            const id = parseInt(idPart);
+            if (id > 2 && id < 5) { // 中间可配置的项目
+                existingElements.push({
+                    id: id,
+                    name: name,
+                    required: true, // 默认必填
+                    fixed: false
+                });
+            }
+        });
+    }
+    
+    // 合并固定项和可配置项
+    currentDeclarationElements = [
+        ...fixedElements.slice(0, 2), // 前两项固定
+        ...existingElements, // 中间可配置项
+        ...fixedElements.slice(2) // 后三项固定
+    ];
+    
+    renderDeclarationElements();
+}
+
+// 渲染申报要素配置列表
+function renderDeclarationElements() {
+    const tbody = document.getElementById('declaration-elements-tbody');
+    let html = '';
+    
+    currentDeclarationElements.forEach((element, index) => {
+        const isFixed = element.fixed;
+        const sortOrder = element.id > 0 ? element.id : element.id + 1000; // 负数转换为正数排序
+        
+        html += `
+            <tr data-index="${index}">
+                <td>${sortOrder}</td>
+                <td>
+                    ${isFixed ? 
+                        `<span>${element.name}</span>` : 
+                        `<input type="text" value="${element.name}" onchange="updateElementName(${index}, this.value)">`
+                    }
+                </td>
+                <td>
+                    <select ${isFixed ? 'disabled' : ''} onchange="updateElementRequired(${index}, this.value)">
+                        <option value="true" ${element.required ? 'selected' : ''}>是</option>
+                        <option value="false" ${!element.required ? 'selected' : ''}>否</option>
+                    </select>
+                </td>
+                <td>
+                    ${!isFixed ? 
+                        `<button onclick="removeElement(${index})" class="btn-remove">删除</button>
+                         <button onclick="moveElementUp(${index})" ${index <= 2 ? 'disabled' : ''} class="btn-move">↑</button>
+                         <button onclick="moveElementDown(${index})" ${index >= currentDeclarationElements.length - 4 ? 'disabled' : ''} class="btn-move">↓</button>` : 
+                        `<span class="fixed-item">固定项</span>`
+                    }
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// 添加申报要素项
+function addDeclarationElement() {
+    const newElement = {
+        id: getNextAvailableId(),
+        name: '新要素项',
+        required: true,
+        fixed: false
+    };
+    
+    // 插入到倒数第三项之前（GTIN之前）
+    const insertIndex = currentDeclarationElements.length - 3;
+    currentDeclarationElements.splice(insertIndex, 0, newElement);
+    
+    renderDeclarationElements();
+}
+
+// 获取下一个可用的ID（排序递增+1）
+function getNextAvailableId() {
+    // 获取中间部分（非固定）要素项的最大ID
+    // 固定要素项：1,2（前两项），-3,-2,-1（最后三项）
+    const middleElements = currentDeclarationElements.filter(el => !el.fixed && el.id > 2 && el.id > 0);
+    if (middleElements.length === 0) {
+        return 3; // 如果没有中间要素项，从3开始
+    }
+    
+    // 找到最大的ID并+1
+    const maxId = Math.max(...middleElements.map(el => el.id));
+    return maxId + 1;
+}
+
+// 更新要素项名称
+function updateElementName(index, name) {
+    currentDeclarationElements[index].name = name;
+}
+
+// 更新要素项必填状态
+function updateElementRequired(index, required) {
+    currentDeclarationElements[index].required = required === 'true';
+}
+
+// 删除要素项
+function removeElement(index) {
+    if (!currentDeclarationElements[index].fixed) {
+        currentDeclarationElements.splice(index, 1);
+        renderDeclarationElements();
+    }
+}
+
+// 上移要素项
+function moveElementUp(index) {
+    if (index > 2 && index < currentDeclarationElements.length - 3) {
+        [currentDeclarationElements[index], currentDeclarationElements[index - 1]] = 
+        [currentDeclarationElements[index - 1], currentDeclarationElements[index]];
+        renderDeclarationElements();
+    }
+}
+
+// 下移要素项
+function moveElementDown(index) {
+    if (index >= 2 && index < currentDeclarationElements.length - 4) {
+        [currentDeclarationElements[index], currentDeclarationElements[index + 1]] = 
+        [currentDeclarationElements[index + 1], currentDeclarationElements[index]];
+        renderDeclarationElements();
+    }
+}
+
+// 保存中国HSCODE编辑
+function saveChinaEdit() {
+    // 验证必填字段
+    const taxRate = document.getElementById('edit-tax-rate').value;
+    const isControlled = document.getElementById('edit-is-controlled').value;
+    const controlInfo = document.getElementById('edit-control-info').value;
+    
+    if (!taxRate) {
+        alert('请填写出口退税率');
+        return;
+    }
+    
+    if (isControlled === '是' && !controlInfo) {
+        alert('请填写管制信息');
+        return;
+    }
+    
+    // 生成申报要素字符串
+    const declarationElementsString = currentDeclarationElements
+        .map((el, index) => `${index + 1}:${el.name}`)
+        .join(';');
+    
+    // 更新数据
+    currentEditingRow.tax_rate = taxRate;
+    currentEditingRow.tariff_rate = document.getElementById('edit-tariff-rate').value;
+    currentEditingRow.is_controlled = isControlled;
+    currentEditingRow.control_info = controlInfo;
+    currentEditingRow.remarks = document.getElementById('edit-remarks').value;
+    currentEditingRow.declaration_elements = declarationElementsString;
+    currentEditingRow.updated_time = new Date().toLocaleString('zh-CN');
+    currentEditingRow.updated_by = 'current_user'; // 实际使用时应该是当前用户
+    
+    // 重新渲染表格
+    renderTable();
+    
+    // 关闭弹窗
+    closeChinaEditModal();
+    
+    alert('保存成功！');
 }
