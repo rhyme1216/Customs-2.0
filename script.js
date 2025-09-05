@@ -69,7 +69,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // 如果是关务商品管理，跳转到关务商品管理页面
+        // 如果是关务商品评估，跳转到关务商品评估页面
+        if (selectedMenu === '关务商品评估') {
+            window.location.href = 'customs-product-management.html';
+            return;
+        }
+        
+        // 如果是商品要素确认，跳转到商品要素确认页面
+        if (selectedMenu === '商品要素确认') {
+            window.location.href = 'product-element-confirmation.html';
+            return;
+        }
+        
+        // 如果是关务商品管理（旧菜单项，保持兼容性）
         if (selectedMenu === '关务商品管理') {
             window.location.href = 'customs-product-management.html';
             return;

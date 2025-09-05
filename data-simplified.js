@@ -19,6 +19,12 @@ const commonColumns = [
     { key: 'productName', title: '商品中文名称', width: 200 },
 ];
 
+// 非中国国家的额外列配置（商品英文名称和当地语种名称）
+const nonChinaExtraColumns = [
+    { key: 'productNameEn', title: '商品英文名称', width: 200 },
+    { key: 'productNameLocal', title: '商品当地名称', width: 200 },
+];
+
 // 中国的列配置（包含要素状态，不包含强制性认证）
 const chinaEndColumns = [
     { key: 'isControlled', title: '是否管制', width: 80 },
@@ -32,7 +38,7 @@ const chinaEndColumns = [
     { key: 'hasOrder', title: '是否产生订单', width: 100 },
     { key: 'firstOrderTime', title: '首次产生订单时间', width: 140 },
     { key: 'declarationElements', title: '申报要素', width: 180 },
-    { key: 'declarationNameCn', title: '申报中文品名', width: 150 },
+    { key: 'declarationNameCn', title: '申报品中文名', width: 150 },
     { key: 'elementStatus', title: '要素状态', width: 100 },
     { key: 'creator', title: '创建人', width: 100 },
     { key: 'salesNote', title: '采销备注', width: 150 },
@@ -162,7 +168,7 @@ const statusOptions = {
     hasOrder: ['是', '否'],
     isControlled: ['是', '否'],
     isMandatoryCert: ['是', '否'],
-    brandAuth: ['按项目授权（一单一议）', '按时间授权(期间)', '无需出口授权']
+    brandAuth: ['按项目授权 (一单一议)', '按时间授权(期间)', '无需出口授权']
 };
 
 // 智能状态生成器 - 根据业务逻辑生成合理的状态组合
@@ -204,15 +210,85 @@ function generateSmartStatuses(isChina = false, forceElementPending = false) {
 // 生成当地语言申报品名
 function getLocalizedDeclarationName(countryKey, template) {
     const localizedNames = {
-        thailand: `อุปกรณ์อุตสาหกรรม ${template.brand} ${template.model}`,
-        indonesia: `Peralatan Industri ${template.brand} ${template.model}`,
-        hungary: `Ipari Berendezés ${template.brand} ${template.model}`,
-        brazil: `Equipamento Industrial ${template.brand} ${template.model}`,
-        vietnam: `Thiết bị Công nghiệp ${template.brand} ${template.model}`,
-        malaysia: `Peralatan Industri ${template.brand} ${template.model}`
+        thailand: `${template.brand} อุปกรณ์`,
+        indonesia: `${template.brand} Peralatan`,
+        hungary: `${template.brand} Berendezés`,
+        brazil: `${template.brand} Equipamento`,
+        vietnam: `${template.brand} Thiết bị`,
+        malaysia: `${template.brand} Peralatan`
     };
     
-    return localizedNames[countryKey] || `${template.brand} ${template.model} Industrial Equipment`;
+    return localizedNames[countryKey] || `${template.brand} Equipment`;
+}
+
+// 添加各国税种数据
+function addCountrySpecificTaxData(baseData, countryKey, isChina) {
+    // 生成随机税率的辅助函数
+    const randomTaxRate = (min = 0, max = 25) => (Math.random() * (max - min) + min).toFixed(2);
+    
+    if (isChina || countryKey === 'china') {
+        // 中国税种数据
+        baseData.exportTaxRate = randomTaxRate(0, 17);
+        baseData.exportTariffRate = randomTaxRate(0, 10);
+        baseData.isControlled = baseData.isControlled || '否';
+        baseData.controlInfo = baseData.controlInfo || '';
+    } else if (countryKey === 'brazil') {
+        // 巴西税种数据
+        baseData.importTariff = randomTaxRate(0, 35);
+        baseData.ipi = randomTaxRate(0, 30);
+        baseData.pis = randomTaxRate(0.65, 2.1);
+        baseData.cofins = randomTaxRate(3, 7.6);
+        baseData.icms = randomTaxRate(7, 25);
+        baseData.antiDumping = randomTaxRate(0, 50);
+        baseData.isControlled = baseData.isControlled || '否';
+        baseData.controlInfo = baseData.controlInfo || '';
+    } else if (countryKey === 'thailand') {
+        // 泰国税种数据
+        baseData.mfnTariff = randomTaxRate(0, 30);
+        baseData.originPreferential = randomTaxRate(0, 10);
+        baseData.exciseTax = randomTaxRate(0, 20);
+        baseData.localTax = randomTaxRate(0, 5);
+        baseData.vat = randomTaxRate(7, 7);
+        baseData.antiDumping = randomTaxRate(0, 40);
+        baseData.isControlled = baseData.isControlled || '否';
+        baseData.controlInfo = baseData.controlInfo || '';
+    } else if (countryKey === 'vietnam') {
+        // 越南税种数据
+        baseData.mfnTariff = randomTaxRate(0, 40);
+        baseData.originPreferential = randomTaxRate(0, 15);
+        baseData.exciseTax = randomTaxRate(0, 70);
+        baseData.vat = randomTaxRate(0, 10);
+        baseData.environmentTaxUnit = randomTaxRate(1000, 50000);
+        baseData.antiDumping = randomTaxRate(0, 35);
+        baseData.isControlled = baseData.isControlled || '否';
+        baseData.controlInfo = baseData.controlInfo || '';
+    } else if (countryKey === 'malaysia') {
+        // 马来西亚税种数据
+        baseData.mfnTariff = randomTaxRate(0, 30);
+        baseData.originPreferential = randomTaxRate(0, 10);
+        baseData.salesTax = randomTaxRate(0, 10);
+        baseData.antiDumping = randomTaxRate(0, 25);
+        baseData.isControlled = baseData.isControlled || '否';
+        baseData.controlInfo = baseData.controlInfo || '';
+    } else if (countryKey === 'indonesia') {
+        // 印尼税种数据
+        baseData.originPreferential = randomTaxRate(0, 15);
+        baseData.vat = randomTaxRate(11, 11);
+        baseData.withholdingTax = randomTaxRate(0, 10);
+        baseData.tradeProtectionTariff = randomTaxRate(0, 150);
+        baseData.generalTariff = randomTaxRate(0, 40);
+        baseData.luxuryTax = randomTaxRate(0, 125);
+        baseData.isControlled = baseData.isControlled || '否';
+        baseData.controlInfo = baseData.controlInfo || '';
+    } else if (countryKey === 'hungary') {
+        // 匈牙利税种数据
+        baseData.vat = randomTaxRate(27, 27);
+        baseData.importDuty = randomTaxRate(0, 17);
+        baseData.antiDumping = randomTaxRate(0, 60);
+        baseData.countervailing = randomTaxRate(0, 30);
+        baseData.isControlled = baseData.isControlled || '否';
+        baseData.controlInfo = baseData.controlInfo || '';
+    }
 }
 
 // 数据生成工厂函数
@@ -236,7 +312,7 @@ function generateProductData(countryConfig, count = 5, isChina = false, countryK
             brand: template.brand || '未知品牌',
             model: template.model || 'M' + baseId.slice(-3),
             brandType: Math.floor(Math.random() * 5), // 随机生成0-4的品牌类型
-            brandAuth: getRandomStatus('brandAuth'), // 从4个枚举值中随机选择
+            brandAuth: getRandomStatus('brandAuth'), // 从3个枚举值中随机选择
             isControlled: isControlled,
             controlInfo: isControlled === '是' ? '存在管制' : '',
             declarationElements: (statuses.elementStatus === 'confirmed' || statuses.elementStatus === 'pending-confirm') ? 
@@ -244,7 +320,7 @@ function generateProductData(countryConfig, count = 5, isChina = false, countryK
             declarationNameCn: (statuses.elementStatus === 'confirmed' || statuses.elementStatus === 'pending-confirm') ? 
                 `工业品` : '',
             declarationNameEn: (statuses.elementStatus === 'confirmed' || statuses.elementStatus === 'pending-confirm') ? 
-                `${template.brand} ${template.model} Industrial Equipment` : '',
+                `${template.brand} Equipment` : '',
             declarationNameLocal: (statuses.elementStatus === 'confirmed' || statuses.elementStatus === 'pending-confirm') ? 
                 getLocalizedDeclarationName(countryKey, template) : '',
             deadline: `2024-0${3 + index}-${10 + index * 5}`,
@@ -279,6 +355,9 @@ function generateProductData(countryConfig, count = 5, isChina = false, countryK
         // 合并公共字段和国家配置
         Object.assign(baseData, commonFields, countryConfig);
         
+        // 添加各国税种数据
+        addCountrySpecificTaxData(baseData, countryKey, isChina);
+        
         // 只有非中国TAB才添加强制性认证字段
         if (!isChina) {
             const isMandatoryCert = getRandomStatus('isMandatoryCert');
@@ -298,7 +377,31 @@ function getRandomStatus(type) {
 }
 
 // 列配置生成器
-function generateColumns(countrySpecificColumns, hscodeName, isChina = false, countryName = '') {
+function generateColumns(isChina = false, countryName = '') {
+    // 根据国家名称映射到配置键
+    const countryKeyMap = {
+        '中国': 'china',
+        '泰国': 'thailand',
+        '越南': 'vietnam',
+        '马来': 'malaysia',
+        '印尼': 'indonesia',
+        '匈牙利': 'hungary',
+        '巴西': 'brazil'
+    };
+    
+    const countryKey = isChina ? 'china' : (countryKeyMap[countryName] || 'thailand');
+    // 不同国家海关编码名称映射
+    const hscodeNameMap = {
+        'china': '中国HS Code',
+        'thailand': '泰国HS Code', 
+        'vietnam': '越南HS Code',
+        'malaysia': '马来HS Code',
+        'indonesia': '印尼HS Code',
+        'hungary': '匈牙利TARIC Code',
+        'brazil': '巴西NCM Code'
+    };
+    const hscodeName = hscodeNameMap[countryKey] || `${countryName}HS编码`;
+    const countrySpecificColumnsConfig = countrySpecificColumns[countryKey] || [];
     let endColumns;
     if (isChina) {
         endColumns = chinaEndColumns;
@@ -340,7 +443,7 @@ function generateColumns(countrySpecificColumns, hscodeName, isChina = false, co
         ...commonColumns,
         ...nameColumns,
         { key: 'hscode', title: hscodeName, width: 120 },
-        ...countrySpecificColumns,
+        ...countrySpecificColumnsConfig,
         ...endColumns
     ];
 }
@@ -348,98 +451,132 @@ function generateColumns(countrySpecificColumns, hscodeName, isChina = false, co
 // 国家特定配置
 const countryConfigs = {
     china: {
-        exportTaxRate: 13,
-        exportTariffRate:  () => Math.floor(Math.random() * 20),
-    },
-    thailand: {
-        mfnRate: () => Math.floor(Math.random() * 20),
-        formE: () => Math.floor(Math.random() * 20),
-        vat: () => Math.floor(Math.random() * 20),
-        exciseTax: () => Math.floor(Math.random() * 20),
-        localTax: () => Math.floor(Math.random() * 20),
-        antiDumping: () => Math.floor(Math.random() * 20),
-    },
-    indonesia: {
-        formE: () => Math.floor(Math.random() * 10),
-        ppn: () => Math.floor(Math.random() * 15) + 5,
-        pph: () => Math.floor(Math.random() * 10),
-        ppnbm: () => Math.floor(Math.random() * 20),
-        bmt: () => Math.floor(Math.random() * 25)
-    },
-    hungary: {
-        importDuty: () => Math.floor(Math.random() * 15),
-        antiDumping: () => Math.floor(Math.random() * 10),
-        countervailing: () => Math.floor(Math.random() * 5),
-        vat: () => Math.floor(Math.random() * 10) + 15
+        exportTaxRate: () => Math.floor(Math.random() * 17),
+        exportTariffRate: () => Math.floor(Math.random() * 10),
+        isControlled: () => Math.random() > 0.8 ? '是' : '否',
+        controlInfo: () => Math.random() > 0.8 ? '需要许可证' : ''
     },
     brazil: {
-        ii: () => Math.floor(Math.random() * 20),
-        ipi: () => Math.floor(Math.random() * 15),
-        pis: () => Math.floor(Math.random() * 5),
-        confins: () => Math.floor(Math.random() * 10),
-        icms: () => Math.floor(Math.random() * 20),
-        antiDumping: () => Math.floor(Math.random() * 15)
+        importTariff: () => Math.floor(Math.random() * 35),
+        ipi: () => Math.floor(Math.random() * 30),
+        pis: () => (Math.random() * 1.45 + 0.65).toFixed(2),
+        cofins: () => (Math.random() * 4.6 + 3).toFixed(2),
+        icms: () => Math.floor(Math.random() * 18 + 7),
+        antiDumping: () => Math.floor(Math.random() * 50),
+        isControlled: () => Math.random() > 0.8 ? '是' : '否',
+        controlInfo: () => Math.random() > 0.8 ? '需要进口许可' : ''
+    },
+    thailand: {
+        mfnTariff: () => Math.floor(Math.random() * 30),
+        originPreferential: () => Math.floor(Math.random() * 10),
+        exciseTax: () => Math.floor(Math.random() * 20),
+        localTax: () => Math.floor(Math.random() * 5),
+        vat: () => 7,
+        antiDumping: () => Math.floor(Math.random() * 40),
+        isControlled: () => Math.random() > 0.8 ? '是' : '否',
+        controlInfo: () => Math.random() > 0.8 ? '需要FDA许可' : ''
     },
     vietnam: {
-        mfnRate: () => Math.floor(Math.random() * 25),
-        vat: () => Math.floor(Math.random() * 5) + 5,
-        exciseTax: () => Math.floor(Math.random() * 10),
-        environmentTax: () => Math.floor(Math.random() * 8)
+        mfnTariff: () => Math.floor(Math.random() * 40),
+        originPreferential: () => Math.floor(Math.random() * 15),
+        exciseTax: () => Math.floor(Math.random() * 70),
+        vat: () => Math.floor(Math.random() * 10),
+        environmentTaxUnit: () => Math.floor(Math.random() * 49000 + 1000),
+        antiDumping: () => Math.floor(Math.random() * 35),
+        isControlled: () => Math.random() > 0.8 ? '是' : '否',
+        controlInfo: () => Math.random() > 0.8 ? '需要质检证书' : ''
     },
     malaysia: {
-        importDuty: () => Math.floor(Math.random() * 30),
+        mfnTariff: () => Math.floor(Math.random() * 30),
+        originPreferential: () => Math.floor(Math.random() * 10),
         salesTax: () => Math.floor(Math.random() * 10),
-        serviceTax: () => Math.floor(Math.random() * 6),
-        exciseDuty: () => Math.floor(Math.random() * 15)
+        antiDumping: () => Math.floor(Math.random() * 25),
+        isControlled: () => Math.random() > 0.8 ? '是' : '否',
+        controlInfo: () => Math.random() > 0.8 ? '需要SIRIM认证' : ''
+    },
+    indonesia: {
+        originPreferential: () => Math.floor(Math.random() * 15),
+        vat: () => 11,
+        withholdingTax: () => Math.floor(Math.random() * 10),
+        tradeProtectionTariff: () => Math.floor(Math.random() * 150),
+        generalTariff: () => Math.floor(Math.random() * 40),
+        luxuryTax: () => Math.floor(Math.random() * 125),
+        isControlled: () => Math.random() > 0.8 ? '是' : '否',
+        controlInfo: () => Math.random() > 0.8 ? '需要SNI认证' : ''
+    },
+    hungary: {
+        vat: () => 27,
+        importDuty: () => Math.floor(Math.random() * 17),
+        antiDumping: () => Math.floor(Math.random() * 60),
+        countervailing: () => Math.floor(Math.random() * 30),
+        isControlled: () => Math.random() > 0.8 ? '是' : '否',
+        controlInfo: () => Math.random() > 0.8 ? '需要CE认证' : ''
     }
 };
 
-// 国家特定列配置
+// 国家特定列配置 - 按照用户要求的各国税率配置
 const countrySpecificColumns = {
     china: [
         { key: 'exportTaxRate', title: '出口退税率%', width: 120, numeric: true },
-        { key: 'exportTariffRate', title: '出口关税率%', width: 120, numeric: true }
-    ],
-    thailand: [
-        { key: 'mfnRate', title: 'MFN税率%', width: 100, numeric: true },
-        { key: 'formE', title: 'Form E%', width: 100, numeric: true },
-        { key: 'vat', title: '增值税VAT%', width: 100, numeric: true },
-        { key: 'exciseTax', title: '消费税%', width: 100, numeric: true },
-        { key: 'localTax', title: '地方税%', width: 100, numeric: true },
-        { key: 'antiDumping', title: '反倾销税率', width: 120, numeric: true }
-    ],
-    indonesia: [
-        { key: 'formE', title: 'Form E%', width: 100, numeric: true },
-        { key: 'ppn', title: '增值税PPN%', width: 100, numeric: true },
-        { key: 'pph', title: '所得税PPH%', width: 100, numeric: true },
-        { key: 'ppnbm', title: '奢侈品税PPNBM%', width: 120, numeric: true },
-        { key: 'bmt', title: '进口税BMT%', width: 120, numeric: true }
-    ],
-    hungary: [
-        { key: 'importDuty', title: '进口关税Import Duty%', width: 140, numeric: true },
-        { key: 'antiDumping', title: '反倾销税率', width: 120, numeric: true },
-        { key: 'countervailing', title: '反补贴税率', width: 120, numeric: true },
-        { key: 'vat', title: '增值税VAT%', width: 100, numeric: true }
+        { key: 'exportTariffRate', title: '出口关税税率%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 100 },
+        { key: 'controlInfo', title: '管制信息', width: 150 }
     ],
     brazil: [
-        { key: 'ii', title: '进口税II%', width: 100, numeric: true },
-        { key: 'ipi', title: '工业产品税IPI%', width: 120, numeric: true },
-        { key: 'pis', title: '社会一体化税PIS%', width: 140, numeric: true },
-        { key: 'confins', title: '社会保障融资税COFINS%', width: 160, numeric: true },
-        { key: 'icms', title: '商品流通税ICMS%', width: 120, numeric: true },
-        { key: 'antiDumping', title: '反倾销税率', width: 120, numeric: true }
+        { key: 'importTariff', title: '进口关税%', width: 100, numeric: true },
+        { key: 'ipi', title: '工业产品税%', width: 120, numeric: true },
+        { key: 'pis', title: '社会一体化费%', width: 140, numeric: true },
+        { key: 'cofins', title: '社会保险融资税%', width: 160, numeric: true },
+        { key: 'icms', title: '流转税%', width: 100, numeric: true },
+        { key: 'antiDumping', title: '反倾销税%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 100 },
+        { key: 'controlInfo', title: '管制信息', width: 150 }
+    ],
+    thailand: [
+        { key: 'mfnTariff', title: '最惠国关税%', width: 120, numeric: true },
+        { key: 'originPreferential', title: '原产地优惠关税%', width: 140, numeric: true },
+        { key: 'exciseTax', title: '消费税%', width: 100, numeric: true },
+        { key: 'localTax', title: '本地税%', width: 100, numeric: true },
+        { key: 'vat', title: '增值税%', width: 100, numeric: true },
+        { key: 'antiDumping', title: '反倾销税%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 100 },
+        { key: 'controlInfo', title: '管制信息', width: 150 }
     ],
     vietnam: [
-        { key: 'mfnRate', title: 'MFN税率%', width: 100, numeric: true },
-        { key: 'vat', title: '增值税VAT%', width: 100, numeric: true },
+        { key: 'mfnTariff', title: '最惠国关税%', width: 120, numeric: true },
+        { key: 'originPreferential', title: '原产地优惠关税%', width: 140, numeric: true },
         { key: 'exciseTax', title: '消费税%', width: 100, numeric: true },
-        { key: 'environmentTax', title: '环境保护税%', width: 120, numeric: true }
+        { key: 'vat', title: '增值税%', width: 100, numeric: true },
+        { key: 'environmentTaxUnit', title: '环境税单价', width: 120, numeric: true },
+        { key: 'antiDumping', title: '反倾销税%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 100 },
+        { key: 'controlInfo', title: '管制信息', width: 150 }
     ],
     malaysia: [
-        { key: 'importDuty', title: '进口关税%', width: 100, numeric: true },
-        { key: 'salesTax', title: '销售税SST%', width: 100, numeric: true },
-        { key: 'serviceTax', title: '服务税%', width: 100, numeric: true },
-        { key: 'exciseDuty', title: '消费税%', width: 100, numeric: true }
+        { key: 'mfnTariff', title: '最惠国关税%', width: 120, numeric: true },
+        { key: 'originPreferential', title: '原产地优惠关税%', width: 140, numeric: true },
+        { key: 'salesTax', title: '销售税%', width: 100, numeric: true },
+        { key: 'antiDumping', title: '反倾销税%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 100 },
+        { key: 'controlInfo', title: '管制信息', width: 150 }
+    ],
+    indonesia: [
+        { key: 'originPreferential', title: '原产地优惠关税%', width: 140, numeric: true },
+        { key: 'vat', title: '增值税%', width: 100, numeric: true },
+        { key: 'withholdingTax', title: '预扣税%', width: 100, numeric: true },
+        { key: 'tradeProtectionTariff', title: '贸易保护关税%', width: 140, numeric: true },
+        { key: 'generalTariff', title: '普通关税%', width: 120, numeric: true },
+        { key: 'luxuryTax', title: '奢侈品税%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 100 },
+        { key: 'controlInfo', title: '管制信息', width: 150 }
+    ],
+    hungary: [
+        { key: 'vat', title: '增值税%', width: 100, numeric: true },
+        { key: 'importDuty', title: '进口关税%', width: 120, numeric: true },
+        { key: 'antiDumping', title: '反倾销税%', width: 120, numeric: true },
+        { key: 'countervailing', title: '反补贴税%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 100 },
+        { key: 'controlInfo', title: '管制信息', width: 150 }
     ]
 };
 
@@ -458,13 +595,13 @@ const tableColumns = {};
 
 // 国家名称映射
 const countryNameMap = {
-    china: '中文',
-    thailand: '泰语',
-    indonesia: '印尼语',
-    hungary: '匈牙利语', 
-    brazil: '葡萄牙语',
-    vietnam: '越南语',
-    malaysia: '马来语'
+    china: '中国',
+    thailand: '泰国',
+    indonesia: '印尼',
+    hungary: '匈牙利', 
+    brazil: '巴西',
+    vietnam: '越南',
+    malaysia: '马来'
 };
 
 Object.keys(countryConfigs).forEach(country => {
@@ -475,21 +612,19 @@ Object.keys(countryConfigs).forEach(country => {
     staticMockData[country] = generateProductData(config, 5, isChina, country);
     
     const hscodeName = {
-        china: '中国HSCODE',
-        thailand: '泰国HSCODE',
-        indonesia: '印尼HSCODE',
-        hungary: 'TARIC',
-        brazil: 'NCM',
-        vietnam: '越南HSCODE',
-        malaysia: '马来HSCODE'
+        china: '中国HS Code',
+        thailand: '泰国HS Code',
+        indonesia: '印尼HS Code',
+        hungary: '匈牙利TARIC Code',
+        brazil: '巴西NCM Code',
+        vietnam: '越南HS Code',
+        malaysia: '马来HS Code'
     }[country];
     
     // 中国使用包含要素状态的列配置，其他国家不包含要素状态
     tableColumns[country] = generateColumns(
-        countrySpecificColumns[country] || [],
-        hscodeName,
         isChina,
-        countryNameMap[country] || '当地语种'
+        countryNameMap[country] || '当地'
     );
 });
 

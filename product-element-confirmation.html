@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>关务商品评估</title>
+    <title>商品要素确认</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="customs-product-management.css">
 </head>
@@ -13,22 +13,22 @@
             <div class="menu-item">
                 <div class="menu-title" data-menu="product">商品管理</div>
                 <div class="submenu" id="product-submenu">
-                    <div class="submenu-item">跨境商品管理</div>
+                    <div class="submenu-item" onclick="window.location.href='customs-product-management.html'">跨境商品管理</div>
                 </div>
             </div>
             
             <div class="menu-item">
                 <div class="menu-title" data-menu="tax">税务管理</div>
                 <div class="submenu" id="tax-submenu">
-                    <div class="submenu-item" data-tariff="true">关务税则维护</div>
+                    <div class="submenu-item" data-tariff="true" onclick="window.location.href='tariff.html'">关务税则维护</div>
                 </div>
             </div>
             
             <div class="menu-item">
                 <div class="menu-title active" data-menu="customs">关务管理</div>
                 <div class="submenu open" id="customs-submenu">
-                    <div class="submenu-item active">关务商品评估</div>
-                    <div class="submenu-item" onclick="window.location.href='product-element-confirmation.html'">商品要素确认</div>
+                    <div class="submenu-item" onclick="window.location.href='customs-product-management.html'">关务商品评估</div>
+                    <div class="submenu-item active" onclick="window.location.href='product-element-confirmation.html'">商品要素确认</div>
                 </div>
             </div>
         </div>
@@ -40,22 +40,26 @@
             <div class="breadcrumb">
                 <span>关务管理</span>
                 <span class="separator">></span>
-                <span>关务商品评估</span>
+                <span>商品要素确认</span>
             </div>
 
-            <!-- 状态TAB区域 -->
+            <!-- 要素状态TAB区域 -->
             <div class="status-tabs">
                 <button class="status-tab-btn active" data-status="all">
                     全部
                     <span class="badge">1,234</span>
                 </button>
-                <button class="status-tab-btn" data-status="customs-pending">
-                    关务评估
+                <button class="status-tab-btn" data-status="pending-submit">
+                    待提交
                     <span class="badge">56</span>
                 </button>
-                <button class="status-tab-btn" data-status="cert-pending">
-                    认证评估
+                <button class="status-tab-btn" data-status="pending-confirm">
+                    待确认
                     <span class="badge">23</span>
+                </button>
+                <button class="status-tab-btn" data-status="confirmed">
+                    已确认
+                    <span class="badge">89</span>
                 </button>
             </div>
 
@@ -121,35 +125,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group" id="cert-status-group">
-                            <label for="cert-status">认证评估状态：</label>
-                            <div class="multi-select-container" id="cert-status" data-placeholder="请选择...">
-                                <div class="multi-select-display">
-                                    <span class="multi-select-placeholder">请选择...</span>
-                                    <span class="multi-select-arrow">▼</span>
-                                </div>
-                                <div class="multi-select-dropdown">
-                                    <div class="multi-select-option" data-value="pending-submit">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">待提交</span>
-                                    </div>
-                                    <div class="multi-select-option" data-value="submitted">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">已提交</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         <div class="form-group" id="has-order-group">
                             <label for="has-order">是否产生订单：</label>
                             <div class="multi-select-container" id="has-order" data-placeholder="请选择...">
                                 <div class="multi-select-display">
-                                    <span class="multi-select-placeholder">请选择...</span>
+                                    <div class="multi-select-tags">
+                                        <span class="multi-select-tag">是</span>
+                                    </div>
                                     <span class="multi-select-arrow">▼</span>
                                 </div>
                                 <div class="multi-select-dropdown">
-                                    <div class="multi-select-option" data-value="yes">
-                                        <div class="multi-select-checkbox"></div>
+                                    <div class="multi-select-option selected" data-value="yes">
+                                        <div class="multi-select-checkbox checked"></div>
                                         <span class="multi-select-option-text">是</span>
                                     </div>
                                     <div class="multi-select-option" data-value="no">
@@ -162,100 +149,16 @@
                     </div>
                     <!-- 第三行：4个组件 -->
                     <div class="search-row">
-                        <div class="form-group" id="customs-status-group">
-                            <label for="customs-status">关务评估状态：</label>
-                            <div class="multi-select-container" id="customs-status" data-placeholder="请选择...">
-                                <div class="multi-select-display">
-                                    <span class="multi-select-placeholder">请选择...</span>
-                                    <span class="multi-select-arrow">▼</span>
-                                </div>
-                                <div class="multi-select-dropdown">
-                                    <div class="multi-select-option" data-value="pending-submit">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">待提交</span>
-                                    </div>
-                                    <div class="multi-select-option" data-value="pending-confirm">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">待确认</span>
-                                    </div>
-                                    <div class="multi-select-option" data-value="confirmed">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">已确认</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group" id="first-order-time-group">
-                            <label for="first-order-time">首次产生订单时间：</label>
-                            <div class="ant-picker ant-picker-range ant-picker-focused">
-                                <input type="date" id="first-order-time-start" class="datetime-compact">
-                                <span class="datetime-separator">至</span>
-                                <input type="date" id="first-order-time-end" class="datetime-compact">
-                            </div>
-                        </div>
-                        <div class="form-group" id="product-status">
-                            <label for="product-status-select">商品评估状态：</label>
-                            <div class="multi-select-container" id="product-status-select" data-placeholder="请选择...">
-                                <div class="multi-select-display">
-                                    <span class="multi-select-placeholder">请选择...</span>
-                                    <span class="multi-select-arrow">▼</span>
-                                </div>
-                                <div class="multi-select-dropdown">
-                                    <div class="multi-select-option" data-value="inactive">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">未生效</span>
-                                    </div>
-                                    <div class="multi-select-option" data-value="active">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">已生效</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group" id="element-status-group">
-                            <label for="element-status">要素状态：</label>
-                            <div class="multi-select-container" id="element-status" data-placeholder="请选择...">
-                                <div class="multi-select-display">
-                                    <span class="multi-select-placeholder">请选择...</span>
-                                    <span class="multi-select-arrow">▼</span>
-                                </div>
-                                <div class="multi-select-dropdown">
-                                    <div class="multi-select-option" data-value="pending-submit">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">待提交</span>
-                                    </div>
-                                    <div class="multi-select-option" data-value="pending-confirm">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">待确认</span>
-                                    </div>
-                                    <div class="multi-select-option" data-value="confirmed">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">已确认</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         <div class="form-group" id="creator-erp-group">
                             <label for="creator-erp-input">创建人ERP：</label>
                             <input type="text" id="creator-erp-input" placeholder="请输入创建人ERP">
                         </div>
-                    </div>
-                    <!-- 第四行：4个组件 -->
-                    <div class="search-row">
                         <div class="form-group" id="create-time-group">
                             <label for="create-time">创建时间：</label>
                             <div class="ant-picker ant-picker-range ant-picker-focused">
                                 <input type="date" id="create-time-start-input" class="datetime-compact">
                                 <span class="datetime-separator">至</span>
                                 <input type="date" id="create-time-end-input" class="datetime-compact">
-                            </div>
-                        </div>
-                        <div class="form-group" id="evaluation-deadline-group">
-                            <label for="deadline">评估截止时间：</label>
-                            <div class="ant-picker ant-picker-range ant-picker-focused">
-                                <input type="date" id="deadline-start" class="datetime-compact">
-                                <span class="datetime-separator">至</span>
-                                <input type="date" id="deadline-end" class="datetime-compact">
                             </div>
                         </div>
                         <div class="form-group" id="updater-erp-group">
@@ -289,31 +192,31 @@
             <div class="country-tabs">
                 <button class="tab-btn active" data-country="china">
                     中国
-                    <span class="badge">6</span>
+                    <span class="badge">0</span>
                 </button>
                 <button class="tab-btn" data-country="thailand">
                     泰国
-                    <span class="badge">6</span>
-                </button>
-                <button class="tab-btn" data-country="vietnam">
-                    越南
-                    <span class="badge">6</span>
-                </button>
-                <button class="tab-btn" data-country="malaysia">
-                    马来
-                    <span class="badge">6</span>
+                    <span class="badge">0</span>
                 </button>
                 <button class="tab-btn" data-country="indonesia">
                     印尼
-                    <span class="badge">6</span>
+                    <span class="badge">0</span>
                 </button>
                 <button class="tab-btn" data-country="hungary">
                     匈牙利
-                    <span class="badge">6</span>
+                    <span class="badge">0</span>
                 </button>
                 <button class="tab-btn" data-country="brazil">
                     巴西
-                    <span class="badge">6</span>
+                    <span class="badge">0</span>
+                </button>
+                <button class="tab-btn" data-country="vietnam">
+                    越南
+                    <span class="badge">0</span>
+                </button>
+                <button class="tab-btn" data-country="malaysia">
+                    马来
+                    <span class="badge">0</span>
                 </button>
             </div>
 
@@ -321,11 +224,8 @@
             <div class="action-section">
                 <button class="btn btn-success" onclick="exportData()">导出</button>
                 <button class="btn btn-primary" onclick="importProducts()">导入商品</button>
-                <button class="btn btn-primary" onclick="importCustomsAssessment()">导入关务评估</button>
-                <button class="btn btn-warning" onclick="customsAssessment()">关务评估</button>
-                <button class="btn btn-info" onclick="assignServiceProvider()">分配服务商</button>
-                <button class="btn btn-success" onclick="customsConfirm()">关务确认</button>
-                <button class="btn btn-warning" onclick="certificationAssessment()">认证评估</button>
+                <button class="btn btn-warning" onclick="batchElementEdit()">批量要素编辑</button>
+                <button class="btn btn-success" onclick="batchElementConfirm()">批量要素确认</button>
             </div>
 
             <!-- 数据表格容器 -->
@@ -339,6 +239,7 @@
                                 </th>
                                 <th class="fixed-column sku-column">国内SKU</th>
                                 <th>国际SKU</th>
+                                <th>图片</th>
                                 <th>商品中文名称</th>
                                 <th>中国HSCODE</th>
                                 <th class="numeric">出口退税率%</th>
@@ -350,7 +251,6 @@
                                 <th>采销ERP</th>
                                 <th>评估截止时间</th>
                                 <th>关务评估状态</th>
-                                <th>强制性认证状态</th>
                                 <th>商品评估状态</th>
                                 <th>是否产生订单</th>
                                 <th>首次产生订单时间</th>
@@ -368,7 +268,7 @@
                         <tbody id="table-body">
                             <!-- 空列表，数据将通过JavaScript动态加载 -->
                             <tr class="empty-row">
-                                <td colspan="27" class="empty-message">
+                                <td colspan="26" class="empty-message">
                                     <div class="empty-content">
                                         <div class="empty-icon">📦</div>
                                         <div class="empty-text">暂无数据</div>
@@ -448,8 +348,9 @@
                             <label>品牌授权情况：<span class="required" style="color: red;">*</span></label>
                             <select id="modal-brand-auth" required>
                                 <option value="" disabled selected>请选择品牌授权情况</option>
-                                <option value="有限制">有限制</option>
-                                <option value="无限制">无限制</option>
+                                <option value="按项目授权 (一单一议)">按项目授权 (一单一议)</option>
+                                <option value="按时间授权(期间)">按时间授权(期间)</option>
+                                <option value="无需出口授权">无需出口授权</option>
                             </select>
                         </div>
                     </div>
@@ -534,11 +435,11 @@
                             <span id="simple-modal-product-name-en">-</span>
                         </div>
                         <div class="info-item">
-                            <label>商品当地名称：</label>
+                            <label id="simple-modal-product-name-local-label">商品当地语种名称：</label>
                             <span id="simple-modal-product-name-local">-</span>
                         </div>
                         <div class="info-item">
-                            <label>中国HSCODE：</label>
+                            <label id="simple-modal-hscode-label">海关编码：</label>
                             <span id="simple-modal-hscode">-</span>
                         </div>
                         <div class="info-item">
@@ -558,11 +459,11 @@
                             <span id="simple-modal-brand-type-display">-</span>
                         </div>
                         <div class="info-item">
-                            <label>申报英文品名：</label>
-                            <input type="text" id="simple-modal-declare-name-en" placeholder="请输入申报英文品名">
+                            <label>申报英文品名：<span class="required" style="color: red;">*</span></label>
+                            <input type="text" id="simple-modal-declare-name-en" placeholder="请输入申报英文品名" required>
                         </div>
                         <div class="info-item">
-                            <label>申报当地品名：</label>
+                            <label id="simple-modal-declare-name-local-label">申报当地品名：</label>
                             <input type="text" id="simple-modal-declare-name-local" placeholder="请输入申报当地品名">
                         </div>
                     </div>
@@ -578,7 +479,7 @@
     </div>
 
 <script src="data-simplified.js"></script>
-    <script src="script.js"></script>
-    <script src="customs-product-management.js"></script>
+    
+    <script src="product-element-confirmation.js"></script>
 </body>
 </html>

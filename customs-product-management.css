@@ -1,3 +1,5 @@
+
+    
 /* 关务商品管理页面特定样式 */
 * {
     margin: 0;
@@ -100,6 +102,28 @@ body {
 }
 
 .status-tab-btn:hover .badge {
+    background-color: #E6F7FF;
+    color: #1890FF;
+}
+
+/* 国家TAB徽标样式 - 与状态TAB保持一致 */
+.tab-btn .badge {
+    background-color: #E6F7FF;
+    color: #1890FF;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.tab-btn.active .badge {
+    background-color: #E6F7FF;
+    color: #1890FF;
+}
+
+.tab-btn:hover .badge {
     background-color: #E6F7FF;
     color: #1890FF;
 }
@@ -560,6 +584,155 @@ body {
     right: 0;
     min-width: 80px;
     text-align: center;
+}
+/* 新的固定列样式支持 */
+.data-table .fixed-left {
+    position: sticky;
+    left: 0;
+    background-color: #fff;
+    z-index: 10;
+}
+
+.data-table th.fixed-left {
+    position: sticky;
+    left: 0;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 20;
+}
+
+.data-table .fixed-right {
+    position: sticky;
+    right: 0;
+    background-color: #fff;
+    z-index: 10;
+}
+
+.data-table th.fixed-right {
+    position: sticky;
+    right: 0;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 20;
+}
+
+/* 复选框列样式 */
+.data-table .checkbox-column {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    text-align: center;
+    background-color: #fff;
+    z-index: 10;
+}
+
+.data-table th.checkbox-column {
+    position: sticky;
+    left: 0;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 20;
+}
+
+/* 调整SKU列位置，因为复选框列占据了left: 0 */
+.data-table .sku-column {
+    position: sticky;
+    left: 50px;
+    min-width: 120px;
+    background-color: #fff;
+    z-index: 10;
+}
+
+.data-table th.sku-column {
+    position: sticky;
+    left: 50px;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 20;
+}
+
+.data-table th.action-column {
+    position: sticky;
+    right: 0;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 20;
+}
+
+.data-table th.fixed-left {
+    position: sticky;
+    left: 0;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 20;
+}
+
+.data-table th.fixed-right {
+    position: sticky;
+/* 针对商品要素确认页面的特殊固定列样式 */
+.data-table th[data-key="checkbox"] {
+    position: sticky;
+    left: 0;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 25;
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+}
+
+.data-table td[data-key="checkbox"] {
+    position: sticky;
+    left: 0;
+    background-color: #fff;
+    z-index: 15;
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+}
+
+.data-table th[data-key="domesticSku"] {
+    position: sticky;
+    left: 50px;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 25;
+    min-width: 120px;
+}
+
+.data-table td[data-key="domesticSku"] {
+    position: sticky;
+    left: 50px;
+    background-color: #fff;
+    z-index: 15;
+    min-width: 120px;
+}
+    right: 0;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 20;
+}
+
+/* 操作列固定宽度调整 */
+.action-column {
+    width: 130px !important;
+    min-width: 130px;
+    text-align: center;
+}
+
+/* 鼠标悬停时固定列的背景色 */
+.data-table tbody tr:hover .fixed-column {
+    background-color: #e6f7ff !important;
+}
+
+.data-table tbody tr:hover .fixed-left {
+    background-color: #e6f7ff !important;
+}
+
+.data-table tbody tr:hover .fixed-right {
+    background-color: #e6f7ff !important;
 }
 
 .data-table tbody tr:hover {
@@ -1819,4 +1992,127 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+/* 操作链接样式 */
+.action-link {
+    color: #1890ff;
+    text-decoration: none;
+    font-size: 13px;
+    margin-right: 12px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.action-link:hover {
+    color: #40a9ff;
+    text-decoration: underline;
+}
+
+.action-link:last-child {
+    margin-right: 0;
+}
+
+/* 商品图片样式 */
+.product-image-cell {
+    text-align: center;
+    padding: 8px;
+}
+
+.product-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+}
+/* 商品要素确认页面 - 宽列换行样式 */
+.data-table th[data-key="productEnglishName"],
+.data-table td[data-key="productEnglishName"],
+.data-table th[data-key="productLocalName"],
+.data-table td[data-key="productLocalName"],
+.data-table th[data-key="declarationEnglishName"],
+.data-table td[data-key="declarationEnglishName"],
+.data-table th[data-key="declarationElements"],
+.data-table td[data-key="declarationElements"],
+.data-table th[data-key="declarationChineseName"],
+.data-table td[data-key="declarationChineseName"] {
+    width: 180px;
+    max-width: 180px;
+    min-width: 180px;
+    word-wrap: break-word;
+    word-break: break-all;
+    white-space: normal;
+    line-height: 1.4;
+    padding: 8px 12px;
+}
+
+/* 确保表格单元格支持换行 */
+.data-table td {
+    white-space: normal;
+    vertical-align: top;
+}
+
+/* 为长文本列设置合适的最小高度 */
+.data-table tr {
+    min-height: 40px;
+}
+
+/* 特殊处理商品英文名称和申报英文品名的显示 */
+.data-table td[data-key="productEnglishName"],
+.data-table td[data-key="declarationEnglishName"],
+.data-table td[data-key="productLocalName"],
+.data-table td[data-key="declarationElements"],
+.data-table td[data-key="declarationChineseName"] {
+    font-size: 13px;
+    line-height: 1.4;
+    max-height: 58px; /* 3行 × 1.4行高 × 13px字体 ≈ 58px */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    width: 180px;
+    max-width: 180px;
+}
+
+/* 鼠标悬停时显示完整内容 */
+.data-table td[data-key="productEnglishName"]:hover,
+.data-table td[data-key="declarationEnglishName"]:hover,
+.data-table td[data-key="productLocalName"]:hover {
+    max-height: none;
+    overflow: visible;
+    background-color: #f8f9fa;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+/* 所有表格单元格文本居中对齐 */
+.data-table th,
+.data-table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* 对于支持换行的长文本列，保持居中但允许换行 */
+.data-table td[data-key="productEnglishName"],
+.data-table td[data-key="declarationEnglishName"],
+.data-table td[data-key="productLocalName"],
+.data-table td[data-key="declarationElements"],
+.data-table td[data-key="declarationChineseName"] {
+    text-align: center;
+    vertical-align: middle;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 确保复选框和操作按钮也居中 */
+.data-table td[data-key="checkbox"],
+.data-table th[data-key="checkbox"] {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.data-table .action-column {
+    text-align: center;
+    vertical-align: middle;
 }

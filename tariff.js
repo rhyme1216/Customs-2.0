@@ -70,7 +70,7 @@ const countryConfig = {
     indonesia: {
         name: '印尼关务税则维护',
         columns: [
-            { key: 'hscode', title: '关税BM', fixed: true },
+            { key: 'hscode', title: '印尼HSCODE', fixed: true },
             { key: 'form_e', title: 'FormE关税', type: 'percentage' },
             { key: 'ppn', title: '增值税PPN', type: 'percentage' },
             { key: 'pph', title: '预扣税PPH', type: 'percentage' },
@@ -86,7 +86,7 @@ const countryConfig = {
     hungary: {
         name: '匈牙利关务税则维护',
         columns: [
-            { key: 'hscode', title: 'Taric', fixed: true },
+            { key: 'hscode', title: 'TARIC', fixed: true },
             { key: 'import_duty', title: '进口关税', type: 'percentage' },
             { key: 'anti_dumping', title: '反倾销税率', type: 'percentage' },
             { key: 'countervailing', title: '反补贴税率', type: 'percentage' },
@@ -192,15 +192,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // 绑定侧边栏其他菜单项点击事件（非税务管理）
+    // 绑定侧边栏其他菜单项点击事件（非税务管理且非关务管理）
     document.querySelectorAll('.submenu-item:not([data-tariff])').forEach(item => {
-        item.addEventListener('click', function(event) {
-            event.stopPropagation();
-            
-            // 跳转回首页并传递菜单参数
-            const menuText = this.textContent;
-            window.location.href = `index.html?menu=${encodeURIComponent(menuText)}`;
-        });
+        // 检查是否是关务管理下的菜单项
+        const isCustomsSubmenu = item.closest('#customs-submenu');
+        
+        if (!isCustomsSubmenu) {
+            item.addEventListener('click', function(event) {
+                event.stopPropagation();
+                
+                // 跳转回首页并传递菜单参数
+                const menuText = this.textContent;
+                window.location.href = `index.html?menu=${encodeURIComponent(menuText)}`;
+            });
+        }
     });
     
     // 获取URL参数来确定显示哪个国家
@@ -216,6 +221,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化显示对应国家数据
     switchCountry(countryParam);
+    
+    // 初始化菜单导航功能
+    initMenuNavigation();
     
     console.log('税则库页面已初始化');
 });
@@ -562,18 +570,15 @@ function addDeclarationElement() {
     renderDeclarationElements();
 }
 
-// 获取下一个可用的ID（排序递增+1）
+// 获取下一个可用的ID
 function getNextAvailableId() {
-    // 获取中间部分（非固定）要素项的最大ID
-    // 固定要素项：1,2（前两项），-3,-2,-1（最后三项）
-    const middleElements = currentDeclarationElements.filter(el => !el.fixed && el.id > 2 && el.id > 0);
-    if (middleElements.length === 0) {
-        return 3; // 如果没有中间要素项，从3开始
+    const usedIds = currentDeclarationElements.map(el => el.id).filter(id => id > 2 && id < 5);
+    for (let i = 3; i < 5; i++) {
+        if (!usedIds.includes(i)) {
+            return i;
+        }
     }
-    
-    // 找到最大的ID并+1
-    const maxId = Math.max(...middleElements.map(el => el.id));
-    return maxId + 1;
+    return 3; // 默认返回3
 }
 
 // 更新要素项名称
@@ -651,4 +656,40 @@ function saveChinaEdit() {
     closeChinaEditModal();
     
     alert('保存成功！');
+// 菜单导航功能
+function initMenuNavigation() {
+    // 初始化菜单展开/收起功能
+    const menuTitles = document.querySelectorAll('.menu-title');
+    
+    menuTitles.forEach(title => {
+        title.addEventListener('click', function() {
+            const menuItem = this.parentElement;
+            const submenu = menuItem.querySelector('.submenu');
+            
+            if (submenu) {
+                // 所有一级菜单点击后都展开所有二级菜单
+                submenu.classList.add('open');
+                this.classList.add('active');
+                
+                // 为所有二级菜单项添加点击事件
+                const submenuItems = submenu.querySelectorAll('.submenu-item');
+                submenuItems.forEach(item => {
+                    if (!item.hasAttribute('data-nav-initialized')) {
+                        item.setAttribute('data-nav-initialized', 'true');
+                        item.addEventListener('click', function(e) {
+                            e.stopPropagation(); // 阻止事件冒泡
+                            
+                            // 移除同级菜单项的active状态
+                            submenuItems.forEach(sibling => sibling.classList.remove('active'));
+                            // 激活当前菜单项
+                            this.classList.add('active');
+                        });
+                    }
+                });
+            }
+        });
+    });
+    
+    console.log('菜单导航功能初始化完成');
+}
 }

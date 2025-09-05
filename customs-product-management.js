@@ -277,7 +277,7 @@ function initMultiSelectComponents() {
 // document.addEventListener('DOMContentLoaded', function() {
 //     initMultiSelectComponents();
 // });
-// 关务商品管理页面JavaScript功能
+// 关务商品评估页面JavaScript功能
 
 // 全局变量
 let currentPage = 1;
@@ -286,6 +286,7 @@ let totalRecords = 0;
 let pageSize = 20;
 let currentCountry = 'china';
 let currentStatus = 'all';
+let currentActiveTab = 'all'; // 添加当前活动TAB跟踪
 let searchParams = {};
 
 // 全局数据存储 - 解决数据持久化问题
@@ -503,25 +504,32 @@ function generateActionButtons(row) {
     const elementStatus = row.elementStatus;
     const isChina = currentCountry === 'china';
     
-    console.log(`生成操作按钮 - SKU: ${row.domesticSku}, 关务状态: ${customsStatus}, 认证状态: ${certStatus}, 商品状态: ${productStatus}, 要素状态: ${elementStatus}, 是否中国: ${isChina}`);
+    console.log(`生成操作按钮 - SKU: ${row.domesticSku}, 关务状态: ${customsStatus}, 认证状态: ${certStatus}, 商品状态: ${productStatus}, 要素状态: ${elementStatus}, 是否中国: ${isChina}, 当前TAB: ${currentActiveTab}`);
+    
+    // 根据当前TAB决定显示哪些按钮
+    const shouldShowCustomsEvaluation = currentActiveTab !== 'element-pending' && currentActiveTab !== 'cert-pending' && currentActiveTab !== 'all';
+    const shouldShowCertEvaluation = currentActiveTab !== 'element-pending' && currentActiveTab !== 'customs-pending' && currentActiveTab !== 'all';
+    const shouldShowElementEdit = currentActiveTab !== 'customs-pending' && currentActiveTab !== 'cert-pending';
+    const shouldShowAssignProvider = currentActiveTab !== 'element-pending' && currentActiveTab !== 'cert-pending' && currentActiveTab !== 'all';
+    const shouldShowCustomsConfirm = currentActiveTab !== 'cert-pending' && currentActiveTab !== 'all'; // 认证评估TAB和全部TAB下隐藏关务确认按钮
     
     // 1. 关务评估按钮逻辑
-    if (customsStatus === 'pending-submit') {
+    if (shouldShowCustomsEvaluation && customsStatus === 'pending-submit') {
         // 初始状态：显示关务评估按钮
         buttons.push(`<a href="javascript:void(0)" class="action-btn customs-btn" onclick="performCustomsEvaluation('${row.domesticSku}')">关务评估</a>`);
-    } else if (customsStatus === 'confirmed') {
+    } else if (shouldShowCustomsEvaluation && customsStatus === 'confirmed') {
         // 已确认状态：可以重新评估（后续评估，需要调整原因）
         buttons.push(`<a href="javascript:void(0)" class="action-btn customs-btn secondary" onclick="performCustomsEvaluation('${row.domesticSku}', true)">关务评估</a>`);
     }
     
     // 2. 关务确认按钮逻辑
-    if (customsStatus === 'pending-confirm') {
+    if (shouldShowCustomsConfirm && customsStatus === 'pending-confirm') {
         // 待确认状态：显示关务确认按钮
         buttons.push(`<a href="javascript:void(0)" class="action-btn confirm-btn" onclick="performCustomsConfirmation('${row.domesticSku}')">关务确认</a>`);
     }
     
     // 3. 认证评估按钮逻辑（中国TAB不显示认证评估）
-    if (!isChina) {
+    if (!isChina && shouldShowCertEvaluation) {
         if (certStatus === 'pending-submit') {
             // 初始状态：显示认证评估按钮
             buttons.push(`<a href="javascript:void(0)" class="action-btn cert-btn" onclick="performCertEvaluation('${row.domesticSku}')">认证评估</a>`);
@@ -534,29 +542,13 @@ function generateActionButtons(row) {
         }
     }
     
-    // 4. 要素编辑按钮逻辑
-    if (isChina) {
-        // 中国TAB：显示完整版编辑要素功能
-        if (elementStatus === 'pending-submit' || elementStatus === 'pending-confirm') {
-            // 待提交或待确认状态：显示编辑要素按钮
-            buttons.push(`<a href="javascript:void(0)" class="action-btn element-btn" onclick="performElementEdit('${row.domesticSku}')">编辑要素</a>`);
-        } else if (elementStatus === 'confirmed') {
-            // 已确认状态：可以重新编辑（后续编辑，需要调整原因）
-            buttons.push(`<a href="javascript:void(0)" class="action-btn element-btn secondary" onclick="performElementEdit('${row.domesticSku}', true)">编辑要素</a>`);
-        }
-    } else {
-        // 非中国TAB：显示简化版编辑要素功能
-        if (elementStatus === 'pending-submit' || elementStatus === 'pending-confirm') {
-            // 待提交或待确认状态：显示编辑要素按钮
-            buttons.push(`<a href="javascript:void(0)" class="action-btn element-btn" onclick="performSimpleElementEdit('${row.domesticSku}')">编辑要素</a>`);
-        } else if (elementStatus === 'confirmed') {
-            // 已确认状态：可以重新编辑（后续编辑，需要调整原因）
-            buttons.push(`<a href="javascript:void(0)" class="action-btn element-btn secondary" onclick="performSimpleElementEdit('${row.domesticSku}', true)">编辑要素</a>`);
-        }
-    }
+    // 4. 要素编辑按钮逻辑已迁移到商品要素确认页面
+    // 原有的编辑要素按钮已移除，功能现在通过关务管理 > 商品要素确认菜单访问
     
-    // 5. 分配服务商按钮（始终显示）
-    buttons.push(`<a href="javascript:void(0)" class="action-btn assign-btn" onclick="performAssignProvider('${row.domesticSku}')">分配服务商</a>`);
+    // 5. 分配服务商按钮
+    if (shouldShowAssignProvider) {
+        buttons.push(`<a href="javascript:void(0)" class="action-btn assign-btn" onclick="performAssignProvider('${row.domesticSku}')">分配服务商</a>`);
+    }
     
     // 6. 详情按钮（始终显示）
     buttons.push(`<a href="javascript:void(0)" class="action-btn detail-btn" onclick="viewProductDetail('${row.domesticSku}')">详情</a>`);
@@ -1060,6 +1052,9 @@ function switchCountryTab(country) {
     
     renderTableData(mockData);
     updatePagination();
+    
+    // 更新国家TAB数字徽标
+    updateCountryTabBadges();
 }
 
 // 根据搜索参数过滤数据
@@ -1395,7 +1390,7 @@ const countryTableHeaders = window.tableColumns || {};
 
 // 初始化页面
 function initializePage() {
-    console.log('关务商品管理页面初始化中...');
+    console.log('关务商品评估页面初始化中...');
     
     // 绑定事件监听器
     bindEventListeners();
@@ -1423,10 +1418,13 @@ function initializePage() {
     // 初始化状态TAB联动
     handleStatusTabChange();
     
+    // 初始化菜单导航功能
+    initMenuNavigation();
+    
     // 更新状态徽标
     updateStatusBadges();
     
-    console.log('关务商品管理页面初始化完成');
+    console.log('关务商品评估页面初始化完成');
 }
 
 // 更新状态徽标
@@ -1607,6 +1605,7 @@ function bindPaginationEvents() {
 function switchStatusTab(status) {
     console.log('switchStatusTab called with status:', status);
     currentStatus = status;
+    currentActiveTab = status; // 更新当前活动TAB
     setActiveStatusTab(status);
     
     // 触发状态TAB联动逻辑（统一处理所有联动功能）
@@ -2273,7 +2272,31 @@ function fillProductInfo(productData) {
     
     document.getElementById('modal-international-sku').textContent = productData.internationalSku || '-';
     document.getElementById('modal-product-name').textContent = productData.productName || productData.productTitle || '-';
-    document.getElementById('modal-hscode').textContent = productData.chinaHscode || productData.hscode || '-';
+    // 根据当前国家动态获取海关编码数据
+    const hscodeNameMap = {
+        'china': 'HS Code',
+        'brazil': 'NCM Code',
+        'vietnam': 'HS Code',
+        'malaysia': 'HS Code',
+        'indonesia': 'HS Code',
+        'thailand': 'HS Code',
+        'hungary': 'TARIC Code'
+    };
+    
+    // 获取当前国家对应的海关编码字段和数据
+    const hscodeFieldMap = {
+        'china': 'chinaHscode',
+        'brazil': 'brazilHscode',
+        'vietnam': 'vietnamHscode',
+        'malaysia': 'malaysiaHscode',
+        'indonesia': 'indonesiaHscode',
+        'thailand': 'thailandHscode',
+        'hungary': 'hungaryHscode'
+    };
+    
+    const hscodeField = hscodeFieldMap[currentCountry] || 'chinaHscode';
+    const hscodeValue = productData[hscodeField] || productData.chinaHscode || productData.hscode || '-';
+    document.getElementById('modal-hscode').textContent = hscodeValue;
     document.getElementById('modal-brand').textContent = productData.brand || '-';
     document.getElementById('modal-model').textContent = productData.model || '-';
     
@@ -2286,24 +2309,6 @@ function fillProductInfo(productData) {
         // 这里可以添加品牌授权点击跳转逻辑，比如查看授权书详情
         console.log('点击品牌授权链接:', productData.brandAuth);
     };
-    
-    // 品牌类型显示映射
-    const brandTypeMapping = {
-        '0': '0-无品牌',
-        '1': '1-境内自主品牌', 
-        '2': '2-境内收购品牌',
-        '3': '3-境外品牌(贴牌生产)',
-        '4': '4-境外品牌(其它)'
-    };
-    
-    // 设置品牌类型显示文本 - 商品信息展示为只读文本
-    const brandTypeDisplay = document.getElementById('modal-brand-type-display');
-    if (productData.brandType !== undefined && productData.brandType !== null) {
-        brandTypeDisplay.textContent = brandTypeMapping[productData.brandType.toString()] || productData.brandType.toString();
-    } else {
-        // 如果商品信息中没有品牌类型，默认显示"0-无品牌"
-        brandTypeDisplay.textContent = brandTypeMapping['0'];
-    }
     
     // 申报中文品名设置输入框的值
     const declareNameInput = document.getElementById('modal-declare-name');
@@ -2348,17 +2353,30 @@ function generateRequiredElementFields(hscode) {
                 input.appendChild(optionElement);
             });
             
-            // 如果是品牌类型字段，默认关联商品信息的品牌类型
-            if (field.key === 'brandType' && currentEditingProduct && currentEditingProduct.brandType !== undefined) {
-                // 根据商品信息的品牌类型设置默认值
-                const brandTypeValue = currentEditingProduct.brandType.toString();
-                const matchingOption = field.options.find(option => option.startsWith(brandTypeValue + '-'));
-                if (matchingOption) {
-                    input.value = matchingOption;
+            // 如果是品牌类型字段，根据商品信息智能设置默认值
+            if (field.key === 'brandType') {
+                // 根据商品信息判断品牌类型
+                let defaultBrandType = '1-境内自主品牌'; // 默认为境内自主品牌
+                
+                // 如果商品信息中有明确的品牌类型，则使用该值
+                if (currentEditingProduct && currentEditingProduct.brandType !== undefined) {
+                    const brandTypeValue = currentEditingProduct.brandType.toString();
+                    const matchingOption = field.options.find(option => option.startsWith(brandTypeValue + '-'));
+                    if (matchingOption) {
+                        defaultBrandType = matchingOption;
+                    }
                 } else {
-                    // 如果找不到匹配项，设置为"0-无品牌"
-                    input.value = field.options.find(option => option.startsWith('0-')) || '';
+                    // 根据品牌信息判断：如果是中文品牌或者为空，默认为境内自主品牌；如果是英文品牌，默认为境外品牌
+                    const brand = currentEditingProduct ? (currentEditingProduct.brand || '') : '';
+                    const hasChineseChars = /[\u4e00-\u9fa5]/.test(brand);
+                    const hasOnlyEnglish = /^[a-zA-Z\s]*$/.test(brand) && brand.trim() !== '';
+                    
+                    if (hasOnlyEnglish && !hasChineseChars) {
+                        defaultBrandType = '4-境外品牌(其它)';
+                    }
                 }
+                
+                input.value = defaultBrandType;
             }
         } else {
             input = document.createElement('input');
@@ -2664,7 +2682,31 @@ function showSimpleElementEditModal(productData, isSubsequent = false) {
     document.getElementById('simple-modal-product-name').textContent = productData.productNameCn || '-';
     document.getElementById('simple-modal-product-name-en').textContent = productData.productNameEn || '-';
     document.getElementById('simple-modal-product-name-local').textContent = productData.productNameLocal || '-';
-    document.getElementById('simple-modal-hscode').textContent = productData.chinaHscode || '-';
+    // 根据当前国家动态获取海关编码数据
+    const hscodeNameMap = {
+        'china': 'HS Code',
+        'brazil': 'NCM Code',
+        'vietnam': 'HS Code',
+        'malaysia': 'HS Code',
+        'indonesia': 'HS Code',
+        'thailand': 'HS Code',
+        'hungary': 'TARIC Code'
+    };
+    
+    // 获取当前国家对应的海关编码字段和数据
+    const hscodeFieldMap = {
+        'china': 'chinaHscode',
+        'brazil': 'brazilHscode',
+        'vietnam': 'vietnamHscode',
+        'malaysia': 'malaysiaHscode',
+        'indonesia': 'indonesiaHscode',
+        'thailand': 'thailandHscode',
+        'hungary': 'hungaryHscode'
+    };
+    
+    const hscodeField = hscodeFieldMap[currentCountry] || 'chinaHscode';
+    const hscodeValue = productData[hscodeField] || productData.chinaHscode || '-';
+    document.getElementById('simple-modal-hscode').textContent = hscodeValue;
     document.getElementById('simple-modal-brand').textContent = productData.brand || '-';
     document.getElementById('simple-modal-model').textContent = productData.model || '-';
     document.getElementById('simple-modal-brand-auth-display').textContent = productData.brandAuth || '-';
@@ -2780,4 +2822,64 @@ function confirmSimpleElement() {
     
     // 刷新表格显示
     refreshCurrentView();
+}
+
+// 菜单导航功能
+function initMenuNavigation() {
+    // 初始化菜单展开/收起功能
+    const menuTitles = document.querySelectorAll('.menu-title');
+    
+    menuTitles.forEach(title => {
+        title.addEventListener('click', function() {
+            const menuItem = this.parentElement;
+            const submenu = menuItem.querySelector('.submenu');
+            
+            if (submenu) {
+                // 所有一级菜单点击后都展开所有二级菜单
+                submenu.classList.add('open');
+                this.classList.add('active');
+                
+                // 为所有二级菜单项添加点击事件
+                const submenuItems = submenu.querySelectorAll('.submenu-item');
+                submenuItems.forEach(item => {
+                    if (!item.hasAttribute('data-nav-initialized')) {
+                        item.setAttribute('data-nav-initialized', 'true');
+                        item.addEventListener('click', function(e) {
+                            e.stopPropagation(); // 阻止事件冒泡
+                            
+                            // 移除同级菜单项的active状态
+                            submenuItems.forEach(sibling => sibling.classList.remove('active'));
+                            // 激活当前菜单项
+                            this.classList.add('active');
+                        });
+                    }
+                });
+            }
+        });
+    });
+    
+    console.log('菜单导航功能初始化完成');
+}
+
+/**
+ * 更新国家TAB的数字徽标
+ */
+function updateCountryTabBadges() {
+    // 获取所有国家TAB按钮
+    const countryTabs = document.querySelectorAll('.country-tabs .tab-btn');
+    
+    countryTabs.forEach(tab => {
+        const country = tab.getAttribute('data-country');
+        const badge = tab.querySelector('.badge');
+        
+        if (badge && country) {
+            // 获取该国家的数据数量
+            const countryData = window.staticMockData && window.staticMockData[country] ? 
+                               window.staticMockData[country] : [];
+            const count = countryData.length;
+            
+            // 使用toLocaleString()格式化数字（添加千分位分隔符）
+            badge.textContent = count.toLocaleString();
+        }
+    });
 }
