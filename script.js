@@ -62,10 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新主内容区域的函数
     function updateMainContent(selectedMenu) {
-        // 如果是关务税则维护，跳转到税则库页面
+        // 如果是关务税则维护，调用专门的处理函数
         if (selectedMenu === '关务税则维护') {
-            // 跳转到税则库页面，默认显示中国数据
-            window.location.href = 'tariff.html?country=china';
+            handleTariffClick();
             return;
         }
         
@@ -125,4 +124,34 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 页面加载完成后的提示
     console.log('关务管理系统侧边栏已加载完成');
+    
+    // 初始化新功能小红点
+    initNewFeatureDot();
 });
+
+// 初始化新功能小红点
+function initNewFeatureDot() {
+    // 检查是否已经体验过新功能（使用localStorage存储）
+    const hasExperiencedTariff = localStorage.getItem('hasExperiencedTariff');
+    
+    if (!hasExperiencedTariff) {
+        // 显示小红点
+        const tariffDot = document.getElementById('tariff-dot');
+        if (tariffDot) {
+            tariffDot.style.display = 'block';
+        }
+    }
+}
+
+// 处理关务税则维护点击事件
+function handleTariffClick() {
+    // 隐藏小红点并记录用户已体验
+    const tariffDot = document.getElementById('tariff-dot');
+    if (tariffDot) {
+        tariffDot.style.display = 'none';
+    }
+    localStorage.setItem('hasExperiencedTariff', 'true');
+    
+    // 跳转到税则库页面
+    window.location.href = 'tariff.html?country=china';
+}
