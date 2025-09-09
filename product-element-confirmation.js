@@ -539,7 +539,7 @@ function renderTableData(data) {
                         <div class="image-text">预览</div>
                     </div>
                 </td>`;
-            } else if (column.key === 'customsStatus' || column.key === 'productStatus' || column.key === 'elementStatus') {
+            } else if (column.key === 'customsStatus' || column.key === 'productStatus' || column.key === 'elementStatus' || column.key === 'certStatus') {
                 const statusText = getStatusText(column.key, value);
                 html += `<td class="${className}" ${cellStyle}>
                     <span class="status-badge status-${value}">${statusText}</span>
@@ -579,6 +579,8 @@ function getStatusText(statusType, status) {
             return getCustomsStatusText(status);
         case 'productStatus':
             return getProductStatusText(status);
+        case 'certStatus':
+            return getCertStatusText(status);
         default:
             return status;
     }
@@ -587,6 +589,7 @@ function getStatusText(statusType, status) {
 // 获取要素状态显示文本
 function getElementStatusText(status) {
     const statusMap = {
+        'submitted': '已提交',
         'pending-submit': '待提交',
         'pending-confirm': '待确认',
         'confirmed': '已确认'
@@ -597,6 +600,7 @@ function getElementStatusText(status) {
 // 获取关务状态显示文本
 function getCustomsStatusText(status) {
     const statusMap = {
+        'submitted': '已提交',
         'pending-submit': '待提交',
         'pending-confirm': '待确认',
         'confirmed': '已确认'
@@ -609,6 +613,17 @@ function getProductStatusText(status) {
     const statusMap = {
         'inactive': '未生效',
         'active': '已生效'
+    };
+    return statusMap[status] || status;
+}
+
+// 获取强制性认证状态显示文本
+function getCertStatusText(status) {
+    const statusMap = {
+        'pending-submit': '待提交',
+        'submitted': '已提交',
+        'pending-confirm': '待确认',
+        'confirmed': '已确认'
     };
     return statusMap[status] || status;
 }

@@ -25,7 +25,7 @@ const nonChinaExtraColumns = [
     { key: 'productNameLocal', title: '商品当地名称', width: 200 },
 ];
 
-// 中国的列配置（包含要素状态，不包含强制性认证）
+// 中国的列配置（包含要素状态和强制性认证状态）
 const chinaEndColumns = [
     { key: 'isControlled', title: '是否管制', width: 80 },
     { key: 'controlInfo', title: '管制信息', width: 150 },
@@ -34,6 +34,7 @@ const chinaEndColumns = [
     { key: 'salesErp', title: '采销ERP', width: 100 },
     { key: 'deadline', title: '评估截止时间', width: 120 },
     { key: 'customsStatus', title: '关务评估状态', width: 120 },
+    { key: 'certStatus', title: '强制性认证状态', width: 140 },
     { key: 'productStatus', title: '商品评估状态', width: 120 },
     { key: 'hasOrder', title: '是否产生订单', width: 100 },
     { key: 'firstOrderTime', title: '首次产生订单时间', width: 140 },
