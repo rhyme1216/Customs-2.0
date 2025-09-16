@@ -252,13 +252,13 @@ let currentElementStatus = 'all'; // 当前选择的要素状态
 const hsCodeElementsConfig = {
     'default': [
         { key: 'brandType', name: '品牌类型', type: 'select', required: true, options: ['0-无品牌', '1-境内自主品牌', '2-境内收购品牌', '3-境外品牌(贴牌生产)', '4-境外品牌(其它)'] },
-        { key: 'brand', name: '英文品牌名', type: 'text', required: true, placeholder: '请输入英文品牌名' },
+        { key: 'brand', name: '品牌名', type: 'text', required: true, placeholder: '请输入品牌名' },
         { key: 'model', name: '型号', type: 'text', required: true, placeholder: '请输入型号' },
         { key: 'usage', name: '用途', type: 'text', required: true, placeholder: '请输入用途' }
     ],
     '8517120000': [
         { key: 'brandType', name: '品牌类型', type: 'select', required: true, options: ['0-无品牌', '1-境内自主品牌', '2-境内收购品牌', '3-境外品牌(贴牌生产)', '4-境外品牌(其它)'] },
-        { key: 'brand', name: '英文品牌名', type: 'text', required: true, placeholder: '请输入英文品牌名' },
+        { key: 'brand', name: '品牌名', type: 'text', required: true, placeholder: '请输入品牌名' },
         { key: 'model', name: '型号', type: 'text', required: true, placeholder: '请输入型号' },
         { key: 'usage', name: '用途', type: 'text', required: true, placeholder: '请输入用途' },
         { key: 'material', name: '材质', type: 'text', required: false, placeholder: '请输入材质' }
@@ -709,7 +709,7 @@ function findProductByDomesticSku(domesticSku) {
         model: 'Model123',
         brandAuth: '按项目授权 (一单一议)',
         brandType: '1',
-        declarationElements: '品牌类型:1|英文品牌名:TestBrand|型号:Model123|用途:工业用',
+        declarationElements: '品牌类型:1|品牌名:TestBrand|型号:Model123|用途:工业用',
         declarationNameCn: '测试申报中文品名',
         elementStatus: 'pending-confirm'
     };
@@ -768,7 +768,7 @@ function fillExistingElementData(elementString) {
     }
     
     try {
-        // 解析申报要素字符串，格式：品牌类型:1|英文品牌名:Brand|型号:Model|用途:工业用
+        // 解析申报要素字符串，格式：品牌类型:1|品牌名:Brand|型号:Model|用途:工业用
         const elements = elementString.split('|');
         
         elements.forEach(element => {
@@ -784,7 +784,7 @@ function fillExistingElementData(elementString) {
                     case '品牌类型':
                         fieldKey = 'brandType';
                         break;
-                    case '英文品牌名':
+                    case '品牌名':
                     case '品牌':
                         fieldKey = 'brand';
                         break;
@@ -851,7 +851,7 @@ function savePendingConfirm() {
     const declareNameCn = document.getElementById('modal-declare-name').value.trim();
     
     // 获取品牌授权情况
-    const brandAuthSelect = document.querySelector('#modal-brand-auth select');
+    const brandAuthSelect = document.getElementById('modal-brand-auth-select');
     const brandAuth = brandAuthSelect ? brandAuthSelect.value.trim() : '';
     
     // 验证必填字段
@@ -1009,6 +1009,24 @@ function fillProductInfo(productData) {
     document.getElementById('modal-international-sku').textContent = productData.internationalSku || '-';
     document.getElementById('modal-product-name').textContent = productData.productName || productData.productTitle || '-';
     document.getElementById('modal-hscode').textContent = productData.chinaHscode || productData.hscode || '-';
+    
+    // 填充商品主图
+    const productImage = document.getElementById('modal-product-image');
+    const productImagePlaceholder = document.getElementById('modal-product-image-placeholder');
+    if (productData.productImage) {
+        productImage.src = productData.productImage;
+        productImage.style.display = 'block';
+        productImagePlaceholder.style.display = 'none';
+    } else {
+        productImage.style.display = 'none';
+        productImagePlaceholder.style.display = 'inline';
+    }
+    
+    // 填充新增字段
+    document.getElementById('modal-function').textContent = productData.function || '-';
+    document.getElementById('modal-usage').textContent = productData.usage || '-';
+    document.getElementById('modal-material').textContent = productData.material || '-';
+    document.getElementById('modal-principle').textContent = productData.principle || '-';
     document.getElementById('modal-brand').textContent = productData.brand || '-';
     document.getElementById('modal-model').textContent = productData.model || '-';
     
@@ -1201,7 +1219,9 @@ function generateRequiredElementFields(hscode) {
             input.placeholder = field.placeholder || `请输入${field.name}`;
         }
         
-        if (field.required) {
+        // 检查是否为必填字段或材质字段
+        const isRequired = field.required || field.key === 'material' || field.name === '材质';
+        if (isRequired) {
             input.setAttribute('required', 'required');
             label.innerHTML += '<span style="color: red;">*</span>';
         }
@@ -1257,7 +1277,7 @@ function generateElementString() {
                     fieldName = '品牌类型';
                     break;
                 case 'brand':
-                    fieldName = '英文品牌名';
+                    fieldName = '品牌名';
                     break;
                 case 'model':
                     fieldName = '型号';
