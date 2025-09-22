@@ -29,6 +29,7 @@
                 <div class="submenu open" id="customs-submenu">
                     <div class="submenu-item" onclick="window.location.href='customs-product-management.html'">关务商品评估</div>
                     <div class="submenu-item active" onclick="window.location.href='product-element-confirmation.html'">商品要素确认</div>
+                    <div class="submenu-item" onclick="window.location.href='customs-declaration-management.html'">报关单管理</div>
                 </div>
             </div>
         </div>
@@ -87,44 +88,8 @@
                     </div>
                     <!-- 第二行：4个组件 -->
                     <div class="search-row">
-                        <div class="form-group" id="data-source">
-                            <label for="data-source-select">数据来源：</label>
-                            <div class="multi-select-container" id="data-source-select" data-placeholder="请选择...">
-                                <div class="multi-select-display">
-                                    <span class="multi-select-placeholder">请选择...</span>
-                                    <span class="multi-select-arrow">▼</span>
-                                </div>
-                                <div class="multi-select-dropdown">
-                                    <div class="multi-select-option" data-value="excel">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">Excel导入</span>
-                                    </div>
-                                    <div class="multi-select-option" data-value="wimp">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">WIMP</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group" id="service-provider-group">
-                            <label for="service-provider">服务商：</label>
-                            <div class="multi-select-container" id="service-provider" data-placeholder="请选择...">
-                                <div class="multi-select-display">
-                                    <span class="multi-select-placeholder">请选择...</span>
-                                    <span class="multi-select-arrow">▼</span>
-                                </div>
-                                <div class="multi-select-dropdown">
-                                    <div class="multi-select-option" data-value="keju">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">科橘</span>
-                                    </div>
-                                    <div class="multi-select-option" data-value="liexin">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">猎芯</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
+                        
                         <div class="form-group" id="has-order-group">
                             <label for="has-order">是否产生订单：</label>
                             <div class="multi-select-container" id="has-order" data-placeholder="请选择...">
@@ -149,18 +114,8 @@
                     </div>
                     <!-- 第三行：4个组件 -->
                     <div class="search-row">
-                        <div class="form-group" id="creator-erp-group">
-                            <label for="creator-erp-input">创建人ERP：</label>
-                            <input type="text" id="creator-erp-input" placeholder="请输入创建人ERP">
-                        </div>
-                        <div class="form-group" id="create-time-group">
-                            <label for="create-time">创建时间：</label>
-                            <div class="ant-picker ant-picker-range ant-picker-focused">
-                                <input type="date" id="create-time-start-input" class="datetime-compact">
-                                <span class="datetime-separator">至</span>
-                                <input type="date" id="create-time-end-input" class="datetime-compact">
-                            </div>
-                        </div>
+                        
+                        
                         <div class="form-group" id="updater-erp-group">
                             <label for="updater-erp">最后更新人ERP：</label>
                             <input type="text" id="updater-erp" placeholder="请输入更新人ERP">
@@ -191,7 +146,7 @@
             <!-- 国家选择标签 -->
             <div class="country-tabs">
                 <button class="tab-btn active" data-country="china">
-                    中国
+                    中国（全部）
                     <span class="badge">0</span>
                 </button>
                 <button class="tab-btn" data-country="thailand">
@@ -420,6 +375,12 @@
                 </div>
             </div>
             
+            <!-- 备注输入区域 -->
+            <div class="remarks-section">
+                <label for="element-remarks">备注：</label>
+                <textarea id="element-remarks" placeholder="请输入备注信息..." rows="3"></textarea>
+            </div>
+            
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="abandonElementEdit()">放弃编辑</button>
                 <button class="btn btn-warning" onclick="savePendingConfirm()">保存待确认</button>
@@ -491,6 +452,12 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 备注输入区域 -->
+            <div class="remarks-section">
+                <label for="simple-element-remarks">备注：</label>
+                <textarea id="simple-element-remarks" placeholder="请输入备注信息..." rows="3"></textarea>
             </div>
             
             <div class="modal-footer">

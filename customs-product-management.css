@@ -2137,3 +2137,38 @@ body {
     font-size: 13px;
     font-style: italic;
 }
+/* 备注输入区域样式 */
+.remarks-section {
+    padding: 15px 20px;
+    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+.remarks-section label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.remarks-section textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.4;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.remarks-section textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.remarks-section textarea::placeholder {
+    color: #999;
+}

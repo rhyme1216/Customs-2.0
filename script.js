@@ -87,6 +87,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // 如果是报关单管理，跳转到报关单管理页面
+        if (selectedMenu === '报关单管理') {
+            window.location.href = 'customs-declaration-management.html';
+            return;
+        }
+        
         const mainContent = document.querySelector('.main-content');
         mainContent.innerHTML = `
             <h1>${selectedMenu}</h1>

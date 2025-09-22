@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报关单编辑</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="customs-declaration-edit.css">
+    <link rel="stylesheet" href="upload-btn-styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="menu">
+            <div class="menu-item">
+                <div class="menu-title" data-menu="product">商品管理</div>
+                <div class="submenu" id="product-submenu">
+                    <div class="submenu-item">跨境商品管理</div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-title" data-menu="tax">税务管理</div>
+                <div class="submenu" id="tax-submenu">
+                    <div class="submenu-item" onclick="window.location.href='tariff.html'">关务税则维护</div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-title active" data-menu="customs">关务管理</div>
+                <div class="submenu open" id="customs-submenu">
+                    <div class="submenu-item" onclick="window.location.href='customs-product-management.html'">关务商品评估</div>
+                    <div class="submenu-item" onclick="window.location.href='product-element-confirmation.html'">商品要素确认</div>
+                    <div class="submenu-item active" onclick="window.location.href='customs-declaration-management.html'">报关单管理</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content-wrapper">
+        <div class="container">
+            <!-- 面包屑导航 -->
+            <div class="breadcrumb">
+                <span onclick="window.location.href='index.html'" style="cursor: pointer;">首页</span>
+                <span class="separator">></span>
+                <span>关务管理</span>
+                <span class="separator">></span>
+                <span onclick="window.location.href='customs-declaration-management.html'" style="cursor: pointer;">报关单管理</span>
+                <span class="separator">></span>
+                <span>编辑报关单</span>
+            </div>
+
+            <!-- 基本信息区域 -->
+            <div class="basic-info-section">
+                <h3>基本信息</h3>
+                <div class="info-grid">
+                    <div class="info-row">
+                        <div class="form-group">
+                            <label>境内发货人：</label>
+                            <input type="text" id="domestic-shipper" value="深圳京东工业数智供应链有限公司" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>境外收货人：</label>
+                            <input type="text" id="overseas-consignee" value="ABC Trading Company" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>生产销售单位：</label>
+                            <input type="text" id="production-unit" value="深圳京东工业数智供应链有限公司" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="form-group">
+                            <label>离境口岸：</label>
+                            <input type="text" id="departure-port" value="深圳" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>指运港口：</label>
+                            <input type="text" id="destination-port" value="洛杉矶" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>运抵国/地区：</label>
+                            <input type="text" id="destination-country" value="美国" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="form-group">
+                            <label>贸易条款：</label>
+                            <input type="text" id="trade-terms" value="FOB" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>运输方式：</label>
+                            <select id="transport-mode" onchange="updateVehicleNumberFields()">
+                                <option value="">请选择运输方式</option>
+                                <option value="非保税区">非保税区</option>
+                                <option value="监管仓库">监管仓库</option>
+                                <option value="水路运输">水路运输</option>
+                                <option value="铁路运输">铁路运输</option>
+                                <option value="公路运输" selected>公路运输</option>
+                                <option value="航空运输">航空运输</option>
+                                <option value="邮件运输">邮件运输</option>
+                                <option value="保税区">保税区</option>
+                                <option value="保税仓库">保税仓库</option>
+                                <option value="其他方式运输">其他方式运输</option>
+                                <option value="边境特殊海关作业区">边境特殊海关作业区</option>
+                                <option value="综合实验区">综合实验区</option>
+                                <option value="物流中心">物流中心</option>
+                                <option value="物流园区">物流园区</option>
+                                <option value="保税港区">保税港区</option>
+                                <option value="出口加工区">出口加工区</option>
+                                <option value="旅客携带">旅客携带</option>
+                                <option value="固定设施运输">固定设施运输</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>航次/航班号：</label>
+                            <input type="text" id="voyage-flight" value="MSC001" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="form-group">
+                            <label>ETD：</label>
+                            <input type="date" id="etd" value="2024-01-15" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>ETA：</label>
+                            <input type="date" id="eta" value="2024-02-01" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>提运单号：</label>
+                            <input type="text" id="bill-of-lading" value="MSC123456789" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="form-group required">
+                            <label>监管方式：<span class="required-mark">*</span></label>
+                            <select id="supervision-mode" required>
+                                <option value="">请选择监管方式</option>
+                                <option value="9610">直邮出口(9610)</option>
+                                <option value="9710">跨境电商B2B直接出口(9710)</option>
+                                <option value="9810">跨境电商出口海外仓(9810)</option>
+                                <option value="0110" selected>一般贸易(0110)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB区域 -->
+            <div class="tab-container">
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-tab="original-details">原始装箱SKU明细</button>
+                    <button class="tab-btn" data-tab="split-result">自动拆合单结果</button>
+                </div>
+
+                <!-- 原始装箱SKU明细 -->
+                <div class="tab-content active" id="original-details">
+                    <div class="table-container">
+                        <div class="table-wrapper">
+                            <table class="data-table" id="original-details-table">
+                                <thead>
+                                    <tr>
+                                        <th>序号</th>
+                                        <th>国内SKU</th>
+                                        <th>国际SKU</th>
+                                        <th>内贸段订单号</th>
+                                        <th>国际订单号</th>
+                                        <th>集装箱号/车号</th>
+                                        <th>包装编号</th>
+                                        <th>长（m）</th>
+                                        <th>宽（m）</th>
+                                        <th>高（m）</th>
+                                        <th>HSCode</th>
+                                        <th>申报要素</th>
+                                        <th>申报中文品名</th>
+                                        <th class="editable">品牌 *</th>
+                                        <th class="editable">型号 *</th>
+                                        <th>数量</th>
+                                        <th class="editable">成交单位 *</th>
+                                        <th>金额</th>
+                                        <th>供应商名称</th>
+                                        <th class="editable">单个净重 *</th>
+                                        <th class="editable">生产企业代码 *</th>
+                                        <th class="editable">生产企业名称 *</th>
+                                        <th class="editable">生产企业联系人 *</th>
+                                        <th class="editable">生产企业联系方式 *</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="original-details-table-body">
+                                    <!-- 数据将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="action-section">
+                        <button class="auto-split-btn" onclick="performAutoSplit()">自动拆合单</button>
+                    </div>
+                </div>
+
+                <!-- 自动拆合单结果 -->
+                <div class="tab-content" id="split-result">
+                    <div class="split-container">
+                        <div class="declaration-tabs">
+                            <div class="declaration-tab-nav" id="declaration-tab-nav">
+                                <!-- 报关单TAB将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                        
+                        <div class="declaration-content" id="declaration-content">
+                            <div class="empty-state">
+                                <p>请先点击"自动拆合单"按钮生成拆合单结果</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮区域 -->
+            <div class="action-buttons">
+                <button class="btn-cancel" onclick="goBack()">返回</button>
+                <button class="btn-save" onclick="saveDeclaration()">保存</button>
+                <button class="btn-submit" onclick="submitDeclaration()">提交</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="customs-declaration-edit.js"></script>
+</body>
+</html>

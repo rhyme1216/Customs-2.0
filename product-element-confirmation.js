@@ -854,6 +854,9 @@ function savePendingConfirm() {
     const brandAuthSelect = document.getElementById('modal-brand-auth-select');
     const brandAuth = brandAuthSelect ? brandAuthSelect.value.trim() : '';
     
+    // 获取备注信息
+    const remarks = document.getElementById('element-remarks').value.trim();
+    
     // 验证必填字段
     if (!declareNameCn) {
         alert('请填写申报中文品名');
@@ -872,13 +875,15 @@ function savePendingConfirm() {
         domesticSku: currentEditingProduct.domesticSku,
         elementString: elementString,
         declareNameCn: declareNameCn,
-        brandType: brandType
+        brandType: brandType,
+        remarks: remarks
     });
     
     // 更新商品要素状态为待确认，并保存申报要素和申报中文品名
     updateProductElementStatus(currentEditingProduct.domesticSku, 'pending-confirm', {
         elementString: elementString,
-        declareNameCn: declareNameCn
+        declareNameCn: declareNameCn,
+        remarks: remarks
     });
     
     showSuccessMessage('已保存为待确认状态！');
@@ -1385,6 +1390,9 @@ function confirmSimpleElement() {
     const declareNameEn = document.getElementById('simple-modal-declare-name-en').value.trim();
     const declareNameLocal = document.getElementById('simple-modal-declare-name-local').value.trim();
     
+    // 获取备注信息
+    const remarks = document.getElementById('simple-element-remarks').value.trim();
+    
     if (!declareNameEn) {
         showErrorMessage('请填写申报英文品名');
         return;
@@ -1393,12 +1401,14 @@ function confirmSimpleElement() {
     console.log('确认简化版要素:', {
         domesticSku: currentSimpleEditingProduct.domesticSku,
         declareNameEn: declareNameEn,
-        declareNameLocal: declareNameLocal
+        declareNameLocal: declareNameLocal,
+        remarks: remarks
     });
     
     updateProductElementStatus(currentSimpleEditingProduct.domesticSku, 'confirmed', {
         declareNameEn: declareNameEn,
-        declareNameLocal: declareNameLocal
+        declareNameLocal: declareNameLocal,
+        remarks: remarks
     });
     
     showSuccessMessage('要素确认成功！');
