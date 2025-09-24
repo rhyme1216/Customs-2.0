@@ -101,6 +101,9 @@ function setPagePermissionsByStatus(status) {
     // 控制自动拆合单按钮
     toggleAutoSplitButton(isPending);
     
+    // 更新右下角提交按钮
+    updateSubmitButton(status);
+    
     // 如果是报关中状态，自动执行拆合单
     if (isProcessing) {
         // 延迟执行，确保页面加载完成
@@ -163,6 +166,24 @@ function updatePageTitle(status) {
     const breadcrumbElement = document.querySelector('.breadcrumb span:last-child');
     if (breadcrumbElement) {
         breadcrumbElement.textContent = `编辑报关单（${statusTexts[status] || '未知状态'}）`;
+    }
+}
+
+// 更新右下角提交按钮
+function updateSubmitButton(status) {
+    const submitBtn = document.querySelector('.btn-submit');
+    if (submitBtn) {
+        if (status === 'pending') {
+            submitBtn.textContent = '确认报关';
+            submitBtn.onclick = confirmCustomsFromBottomButton;
+        } else if (status === 'processing') {
+            submitBtn.textContent = '报关完成';
+            submitBtn.onclick = completeCustomsDeclaration;
+        } else {
+            // 其他状态保持原有逻辑
+            submitBtn.textContent = '提交';
+            submitBtn.onclick = submitDeclaration;
+        }
     }
 }
 
@@ -235,7 +256,9 @@ function loadOriginalDetails() {
             domesticOrderNo: 'DOM2024001',
             internationalOrderNo: 'INT2024001',
             containerNo: 'MSKU1234567',
+            productTitle: '苹果iPhone 15 128GB 蓝色 手机',
             packageNo: 'PKG001',
+            packageType: '纸箱',
             length: 0.15,
             width: 0.08,
             height: 0.01,
@@ -249,6 +272,7 @@ function loadOriginalDetails() {
             amount: 50000,
             supplier: '苹果公司',
             netWeight: 0.2,
+            grossWeight: 0.24,
             enterpriseCode: 'ENT001',
             enterpriseName: '苹果制造有限公司',
             contactPerson: '张三',
@@ -261,7 +285,9 @@ function loadOriginalDetails() {
             domesticOrderNo: 'DOM2024002',
             internationalOrderNo: 'INT2024002',
             containerNo: 'MSKU1234567',
+            productTitle: '戴尔XPS 13 9315 13.3英寸笔记本电脑',
             packageNo: 'PKG002',
+            packageType: '木箱',
             length: 0.32,
             width: 0.22,
             height: 0.02,
@@ -275,6 +301,7 @@ function loadOriginalDetails() {
             amount: 75000,
             supplier: '戴尔公司',
             netWeight: 1.2,
+            grossWeight: 1.44,
             enterpriseCode: 'ENT002',
             enterpriseName: '戴尔制造有限公司',
             contactPerson: '李四',
@@ -287,7 +314,9 @@ function loadOriginalDetails() {
             domesticOrderNo: 'DOM2024003',
             internationalOrderNo: 'INT2024003',
             containerNo: 'MSKU1234568',
+            productTitle: '三星24英寸S24E450显示器 LED背光',
             packageNo: 'PKG003',
+            packageType: '泡沫箱',
             length: 0.6,
             width: 0.4,
             height: 0.08,
@@ -301,10 +330,40 @@ function loadOriginalDetails() {
             amount: 15000,
             supplier: '三星公司',
             netWeight: 3.5,
+            grossWeight: 4.2,
             enterpriseCode: 'ENT003',
             enterpriseName: '三星制造有限公司',
             contactPerson: '王五',
             contactPhone: '13700137000'
+        },
+        {
+            id: 4,
+            domesticSku: 'D004-AP-002',
+            internationalSku: 'I004-AP-002',
+            domesticOrderNo: 'DOM2024004',
+            internationalOrderNo: 'INT2024004',
+            containerNo: 'MSKU1234567',
+            productTitle: '苹果AirPods Pro 第二代 无线蓝牙耳机',
+            packageNo: 'PKG001', // 与第一个商品相同包装编号
+            packageType: '纸箱',
+            length: 0.12,
+            width: 0.06,
+            height: 0.008,
+            hsCode: '8517120000',
+            declareElements: '品牌类型;出口享惠情况;用途;品牌;型号',
+            chineseName: '手机配件',
+            brand: 'Apple',
+            model: 'AirPods Pro',
+            quantity: 200,
+            unit: '台',
+            amount: 30000,
+            supplier: '苹果公司',
+            netWeight: 0.05,
+            grossWeight: 0.06,
+            enterpriseCode: 'ENT001',
+            enterpriseName: '苹果制造有限公司',
+            contactPerson: '张三',
+            contactPhone: '13800138000'
         }
     ];
     
@@ -313,6 +372,9 @@ function loadOriginalDetails() {
 
 // 渲染原始装箱SKU明细
 function renderOriginalDetails(data) {
+    // 首先渲染统计信息
+    renderOriginalDetailsSummary(data);
+    
     const tbody = document.getElementById('original-details-table-body');
     tbody.innerHTML = '';
     
@@ -325,20 +387,43 @@ function renderOriginalDetails(data) {
             <td>${item.domesticOrderNo || '-'}</td>
             <td>${item.internationalOrderNo || '-'}</td>
             <td>${item.containerNo || '-'}</td>
+            <td>${item.productTitle || '-'}</td>
             <td>${item.packageNo || '-'}</td>
+            <td>${item.packageType || '-'}</td>
             <td>${item.length || '-'}</td>
             <td>${item.width || '-'}</td>
             <td>${item.height || '-'}</td>
             <td>${item.hsCode}</td>
             <td>${item.declareElements}</td>
             <td>${item.chineseName}</td>
-            <td><input type="text" value="${item.brand}" data-field="brand" data-id="${item.id}"></td>
-            <td><input type="text" value="${item.model}" data-field="model" data-id="${item.id}"></td>
+            <td>${item.brand || '-'}</td>
+            <td>${item.model || '-'}</td>
             <td>${item.quantity}</td>
-            <td><input type="text" value="${item.unit}" data-field="unit" data-id="${item.id}"></td>
+            <td>
+                <select data-field="unit" data-id="${item.id}">
+                    <option value="台" ${item.unit === '台' ? 'selected' : ''}>台</option>
+                    <option value="个" ${item.unit === '个' ? 'selected' : ''}>个</option>
+                    <option value="件" ${item.unit === '件' ? 'selected' : ''}>件</option>
+                    <option value="套" ${item.unit === '套' ? 'selected' : ''}>套</option>
+                    <option value="批" ${item.unit === '批' ? 'selected' : ''}>批</option>
+                    <option value="箱" ${item.unit === '箱' ? 'selected' : ''}>箱</option>
+                    <option value="包" ${item.unit === '包' ? 'selected' : ''}>包</option>
+                    <option value="盒" ${item.unit === '盒' ? 'selected' : ''}>盒</option>
+                    <option value="只" ${item.unit === '只' ? 'selected' : ''}>只</option>
+                    <option value="双" ${item.unit === '双' ? 'selected' : ''}>双</option>
+                    <option value="对" ${item.unit === '对' ? 'selected' : ''}>对</option>
+                    <option value="支" ${item.unit === '支' ? 'selected' : ''}>支</option>
+                    <option value="根" ${item.unit === '根' ? 'selected' : ''}>根</option>
+                    <option value="米" ${item.unit === '米' ? 'selected' : ''}>米</option>
+                    <option value="千克" ${item.unit === '千克' ? 'selected' : ''}>千克</option>
+                    <option value="公斤" ${item.unit === '公斤' ? 'selected' : ''}>公斤</option>
+                    <option value="克" ${item.unit === '克' ? 'selected' : ''}>克</option>
+                    <option value="吨" ${item.unit === '吨' ? 'selected' : ''}>吨</option>
+                </select>
+            </td>
             <td>${item.amount.toLocaleString()}</td>
             <td>${item.supplier}</td>
-            <td><input type="text" value="${item.netWeight}" data-field="netWeight" data-id="${item.id}"></td>
+            <td><input type="text" value="${item.netWeight}" data-field="netWeight" data-id="${item.id}" onchange="updateOriginalDetailsSummary()"></td>
             <td><input type="text" value="${item.enterpriseCode}" data-field="enterpriseCode" data-id="${item.id}"></td>
             <td><input type="text" value="${item.enterpriseName}" data-field="enterpriseName" data-id="${item.id}"></td>
             <td><input type="text" value="${item.contactPerson}" data-field="contactPerson" data-id="${item.id}"></td>
@@ -354,8 +439,27 @@ function renderOriginalDetails(data) {
 // 绑定输入框事件
 function bindInputEvents() {
     const inputs = document.querySelectorAll('#original-details-table-body input');
+    const selects = document.querySelectorAll('#original-details-table-body select');
+    
     inputs.forEach(input => {
         input.addEventListener('change', function() {
+            const id = this.getAttribute('data-id');
+            const field = this.getAttribute('data-field');
+            const value = this.value;
+            
+            console.log(`更新商品 ${id} 的 ${field} 为: ${value}`);
+            
+            // 如果是净重字段变化，更新统计信息
+            if (field === 'netWeight') {
+                updateOriginalDetailsSummary();
+            }
+            
+            // 这里可以添加数据更新逻辑
+        });
+    });
+    
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
             const id = this.getAttribute('data-id');
             const field = this.getAttribute('data-field');
             const value = this.value;
@@ -412,6 +516,22 @@ function getTransportMode() {
     return transportModeElement ? transportModeElement.value : '水路运输';
 }
 
+// 根据商品明细计算包装种类汇总
+function calculatePackageTypes(items) {
+    const packageTypes = new Set();
+    items.forEach(item => {
+        if (item.packageType) {
+            packageTypes.add(item.packageType);
+        }
+    });
+    return Array.from(packageTypes).join('+');
+}
+
+// 为拆合单计算包装种类
+function calculateDeclarationPackageTypes(declaration) {
+    return calculatePackageTypes(declaration.items);
+}
+
 // 更新车号字段状态
 function updateVehicleNumberFields() {
     const transportMode = getTransportMode();
@@ -464,6 +584,7 @@ function performAutoSplit() {
                 totalNetWeight: '590.1 KG',
                 totalCBM: '0.120 CBM',
                 vehicleNumber: getTransportMode() === '公路运输' ? 'GD12345' : '',
+                packageTypes: '纸箱',
                 items: [
                     {
                         seq: 1,
@@ -478,7 +599,8 @@ function performAutoSplit() {
                         totalNetWeight: 20,
                         length: 0.15,
                         width: 0.08,
-                        height: 0.01
+                        height: 0.01,
+                        packageType: '纸箱'
                     }
                 ]
             },
@@ -496,6 +618,7 @@ function performAutoSplit() {
                 totalNetWeight: '590.2 KG',
                 totalCBM: '2.056 CBM',
                 vehicleNumber: getTransportMode() === '公路运输' ? 'GD67890' : '',
+                packageTypes: '木箱+泡沫箱',
                 items: [
                     {
                         seq: 1,
@@ -510,7 +633,8 @@ function performAutoSplit() {
                         totalNetWeight: 60,
                         length: 0.32,
                         width: 0.22,
-                        height: 0.02
+                        height: 0.02,
+                        packageType: '木箱'
                     },
                     {
                         seq: 2,
@@ -525,7 +649,8 @@ function performAutoSplit() {
                         totalNetWeight: 105,
                         length: 0.6,
                         width: 0.4,
-                        height: 0.08
+                        height: 0.08,
+                        packageType: '泡沫箱'
                     }
                 ]
             }
@@ -573,6 +698,7 @@ function performAutoSplitForProcessingStatus() {
                 totalNetWeight: '590.1 KG',
                 totalCBM: '0.120 CBM',
                 vehicleNumber: getTransportMode() === '公路运输' ? 'GD12345' : '',
+                packageTypes: '纸箱',
                 items: [
                     {
                         seq: 1,
@@ -587,7 +713,8 @@ function performAutoSplitForProcessingStatus() {
                         totalNetWeight: 20,
                         length: 0.15,
                         width: 0.08,
-                        height: 0.01
+                        height: 0.01,
+                        packageType: '纸箱'
                     }
                 ]
             },
@@ -605,6 +732,7 @@ function performAutoSplitForProcessingStatus() {
                 totalNetWeight: '590.2 KG',
                 totalCBM: '2.056 CBM',
                 vehicleNumber: getTransportMode() === '公路运输' ? 'GD67890' : '',
+                packageTypes: '木箱+泡沫箱',
                 items: [
                     {
                         seq: 1,
@@ -619,7 +747,8 @@ function performAutoSplitForProcessingStatus() {
                         totalNetWeight: 60,
                         length: 0.32,
                         width: 0.22,
-                        height: 0.02
+                        height: 0.02,
+                        packageType: '木箱'
                     },
                     {
                         seq: 2,
@@ -634,7 +763,8 @@ function performAutoSplitForProcessingStatus() {
                         totalNetWeight: 105,
                         length: 0.6,
                         width: 0.4,
-                        height: 0.08
+                        height: 0.08,
+                        packageType: '泡沫箱'
                     }
                 ]
             }
@@ -660,6 +790,13 @@ function renderSplitResult(data) {
     // 清空现有内容
     tabNav.innerHTML = '';
     content.innerHTML = '';
+    
+    // 为每个报关单计算包装种类
+    data.forEach(declaration => {
+        if (!declaration.packageTypes) {
+            declaration.packageTypes = calculateDeclarationPackageTypes(declaration);
+        }
+    });
     
     // 生成TAB按钮
     data.forEach((declaration, index) => {
@@ -703,7 +840,6 @@ function showDeclarationDetail(declarationId, allData) {
         <div class="declaration-detail active">
             <div class="declaration-info-header">
                 <h4>报关信息${isProcessing ? '（必填项）' : '（非必填项）'}</h4>
-                ${isProcessing ? '<div class="confirm-customs-btn-container"><button class="btn-confirm-customs" onclick="confirmCustomsDeclaration(' + declarationId + ')">确认报关</button></div>' : ''}
             </div>
             <div class="detail-form">
                 <div class="form-group">
@@ -764,6 +900,10 @@ function showDeclarationDetail(declarationId, allData) {
                 <div class="form-group">
                     <label>车号：</label>
                     <input type="text" id="vehicle-number-${declarationId}" value="${declaration.vehicleNumber || ''}" placeholder="${getTransportMode() === '公路运输' ? '请输入车号' : '此时非必填'}" ${getTransportMode() !== '公路运输' ? 'readonly' : ''}>
+                </div>
+                <div class="form-group">
+                    <label>包装种类：</label>
+                    <input type="text" id="package-types-${declarationId}" value="${declaration.packageTypes || ''}" placeholder="自动汇总" readonly>
                 </div>
             </div>
             
@@ -928,6 +1068,72 @@ function getCurrentSplitResultData() {
     return null;
 }
 
+// 从右下角按钮确认报关（待报关状态）
+function confirmCustomsFromBottomButton() {
+    if (!validateForm()) {
+        return;
+    }
+    
+    if (!confirm('确认进行报关操作？确认后状态将变为"报关中"，原始装箱SKU明细将不可编辑。')) {
+        return;
+    }
+    
+    // 更新状态为报关中
+    currentDeclarationStatus = 'processing';
+    
+    // 重新设置页面权限
+    setPagePermissionsByStatus('processing');
+    
+    // 自动创建进口报关单
+    createImportDeclarationForDestinationCountry();
+    
+    showSuccessMessage('报关确认成功！状态已更新为"报关中"');
+}
+
+// 报关完成（报关中状态）
+function completeCustomsDeclaration() {
+    // 检查是否有拆合单结果
+    const declarationTabBtns = document.querySelectorAll('.declaration-tab-btn');
+    if (declarationTabBtns.length === 0) {
+        alert('请先执行自动拆合单生成报关单结果');
+        return;
+    }
+    
+    // 验证所有报关单的必填字段
+    let allValid = true;
+    let invalidDeclarations = [];
+    
+    declarationTabBtns.forEach((btn, index) => {
+        const declarationId = btn.getAttribute('data-declaration-id');
+        if (!validateDeclarationRequiredFields(declarationId)) {
+            allValid = false;
+            invalidDeclarations.push(btn.textContent);
+        }
+    });
+    
+    if (!allValid) {
+        alert(`以下报关单的必填字段未完成：\n${invalidDeclarations.join('\n')}\n\n请完善后再进行报关完成操作。`);
+        return;
+    }
+    
+    if (!confirm('确认所有报关单都已完成报关？完成后状态将变为"报关完成"。')) {
+        return;
+    }
+    
+    // 更新状态为报关完成
+    currentDeclarationStatus = 'completed';
+    
+    // 重新设置页面权限
+    setPagePermissionsByStatus('completed');
+    
+    showSuccessMessage('报关完成！');
+    
+    // 可以跳转回列表页面
+    setTimeout(() => {
+        goBack();
+    }, 1500);
+}
+
 // 返回上一页
 function goBack() {
     window.location.href = 'customs-declaration-management.html';
@@ -979,6 +1185,7 @@ function validateForm() {
     
     // 验证可编辑字段
     const editableInputs = document.querySelectorAll('#original-details-table-body input');
+    const editableSelects = document.querySelectorAll('#original-details-table-body select');
     let hasError = false;
     
     editableInputs.forEach(input => {
@@ -987,6 +1194,15 @@ function validateForm() {
             hasError = true;
         } else {
             input.style.borderColor = '#ddd';
+        }
+    });
+    
+    editableSelects.forEach(select => {
+        if (!select.value.trim()) {
+            select.style.borderColor = '#ff4444';
+            hasError = true;
+        } else {
+            select.style.borderColor = '#ddd';
         }
     });
     
@@ -1264,6 +1480,239 @@ function confirmFileUpload(declarationId) {
     }, 1500);
 }
 
+// 渲染原始装箱SKU明细统计信息
+function renderOriginalDetailsSummary(data) {
+    // 查找或创建统计信息容器
+    let summaryContainer = document.querySelector('.original-details-summary');
+    if (!summaryContainer) {
+        summaryContainer = document.createElement('div');
+        summaryContainer.className = 'original-details-summary';
+        
+        // 找到表格容器，在其前面插入统计信息
+        const tableContainer = document.querySelector('#original-details .table-container');
+        tableContainer.parentNode.insertBefore(summaryContainer, tableContainer);
+    }
+    
+    // 计算按包装编号分组的统计数据
+    const packageStats = calculatePackageStats(data);
+    
+    summaryContainer.innerHTML = `
+        <div class="summary-header">
+            <h4>装箱统计信息</h4>
+        </div>
+        <div class="summary-list">
+            ${packageStats.map(stat => `
+                <div class="summary-row">
+                    <span class="package-label">包装编号：</span>
+                    <span class="package-number">${stat.packageNo}</span>
+                    <span class="weight-separator">|</span>
+                    <span class="weight-label">总净重：</span>
+                    <span class="net-weight-value" data-package="${stat.packageNo}">${stat.totalNetWeight} KG</span>
+                    <span class="weight-separator">|</span>
+                    <span class="weight-label">总毛重：</span>
+                    <span class="gross-weight-value">${stat.totalGrossWeight} KG（不可编辑）</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// 计算按包装编号分组的统计数据
+function calculatePackageStats(data = null) {
+    let sourceData = data;
+    
+    if (!sourceData) {
+        // 从页面表格中获取数据
+        sourceData = [];
+        const rows = document.querySelectorAll('#original-details-table-body tr');
+        rows.forEach(row => {
+            const cells = row.cells;
+            const packageNo = cells[7].textContent; // 包装编号列（索引7：第8列）
+            const packageType = cells[8].textContent; // 包装种类列（索引8：第9列）
+            const quantity = parseInt(cells[17].textContent) || 0; // 数量列（索引17：第18列，因为添加了包装种类列）
+            const netWeightInput = row.querySelector('input[data-field="netWeight"]');
+            const netWeight = parseFloat(netWeightInput ? netWeightInput.value : 0) || 0;
+            
+            sourceData.push({
+                packageNo: packageNo,
+                packageType: packageType,
+                quantity: quantity,
+                netWeight: netWeight
+            });
+        });
+    }
+    
+    // 按包装编号分组统计
+    const packageGroups = {};
+    sourceData.forEach(item => {
+        const packageNo = item.packageNo || '-';
+        if (!packageGroups[packageNo]) {
+            packageGroups[packageNo] = {
+                packageNo: packageNo,
+                totalNetWeight: 0,
+                totalGrossWeight: 0
+            };
+        }
+        
+        const itemTotalNetWeight = (item.netWeight || 0) * (item.quantity || 0);
+        packageGroups[packageNo].totalNetWeight += itemTotalNetWeight;
+        packageGroups[packageNo].totalGrossWeight = packageGroups[packageNo].totalNetWeight * 1.2; // 假设毛重是净重的1.2倍
+    });
+    
+    // 转换为数组并格式化数值
+    return Object.values(packageGroups).map(group => ({
+        ...group,
+        totalNetWeight: group.totalNetWeight.toFixed(2),
+        totalGrossWeight: group.totalGrossWeight.toFixed(2)
+    }));
+}
+
+// 更新原始装箱SKU明细统计信息
+function updateOriginalDetailsSummary() {
+    const packageStats = calculatePackageStats();
+    
+    // 更新每个包装编号的统计信息
+    packageStats.forEach(stat => {
+        const netWeightElement = document.querySelector(`.net-weight-value[data-package="${stat.packageNo}"]`);
+        const grossWeightElement = netWeightElement ? netWeightElement.parentNode.nextElementSibling.querySelector('.gross-weight-value') : null;
+        
+        if (netWeightElement) {
+            netWeightElement.textContent = `${stat.totalNetWeight} KG`;
+        }
+        
+        if (grossWeightElement) {
+            grossWeightElement.textContent = `${stat.totalGrossWeight} KG（不可编辑）`;
+        }
+    });
+}
+
+// 自动创建进口报关单到目的国家
+function createImportDeclarationForDestinationCountry() {
+    // 获取目的国家信息（这里应该从表单或数据中获取实际的目的国家）
+    const destinationCountry = getDestinationCountryFromDeclaration();
+    
+    if (!destinationCountry) {
+        console.log('未找到目的国家信息，无法自动创建进口报关单');
+        return;
+    }
+    
+    // 根据目的国家创建对应的进口报关单
+    const importDeclarationData = generateImportDeclarationData(destinationCountry);
+    
+    // 模拟创建过程
+    setTimeout(() => {
+        showSuccessMessage(`已自动在${destinationCountry.name}创建进口报关单（状态：待报关）`);
+        console.log(`自动创建进口报关单:`, {
+            country: destinationCountry,
+            data: importDeclarationData,
+            status: 'pending'
+        });
+    }, 1000);
+}
+
+// 获取出口报关单的目的国家
+function getDestinationCountryFromDeclaration() {
+    // 支持的国家映射
+    const countryMapping = {
+        'thailand': { name: '泰国', code: 'thailand', flag: '🇹🇭' },
+        'hungary': { name: '匈牙利', code: 'hungary', flag: '🇭🇺' },
+        'malaysia': { name: '马来西亚', code: 'malaysia', flag: '🇲🇾' },
+        'indonesia': { name: '印尼', code: 'indonesia', flag: '🇮🇩' },
+        'brazil': { name: '巴西', code: 'brazil', flag: '🇧🇷' },
+        'vietnam': { name: '越南', code: 'vietnam', flag: '🇻🇳' }
+    };
+    
+    // 这里应该从实际的表单字段中获取目的国家
+    // 现在使用模拟逻辑，随机选择一个国家作为演示
+    const countries = Object.keys(countryMapping);
+    const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+    
+    // 在实际应用中，应该从表单的目的国家字段获取：
+    // const destinationCountryElement = document.getElementById('destination-country');
+    // const countryCode = destinationCountryElement ? destinationCountryElement.value : null;
+    // return countryCode ? countryMapping[countryCode] : null;
+    
+    return countryMapping[randomCountry];
+}
+
+// 生成进口报关单数据
+function generateImportDeclarationData(destinationCountry) {
+    // 获取当前出口报关单的基本信息
+    const exportDeclarationNo = getCurrentExportDeclarationNo();
+    const exportDeclarationData = getCurrentExportDeclarationData();
+    
+    // 生成进口报关单数据
+    const importDeclarationData = {
+        id: generateImportDeclarationId(destinationCountry.code),
+        batchNo: generateImportBatchNo(destinationCountry.code),
+        declarationNo: '', // 进口报关单号留空，待后续填写
+        exportDeclarationNo: exportDeclarationNo,
+        status: 'pending', // 待报关状态
+        country: destinationCountry,
+        createdFrom: 'export-processing', // 标记来源
+        createTime: new Date().toISOString(),
+        originalExportData: exportDeclarationData
+    };
+    
+    return importDeclarationData;
+}
+
+// 获取当前出口报关单编号
+function getCurrentExportDeclarationNo() {
+    // 从URL参数或页面数据中获取
+    const urlParams = new URLSearchParams(window.location.search);
+    const exportDeclarationId = urlParams.get('id');
+    
+    // 生成出口报关单号（实际应该从数据中获取）
+    return `EXP${new Date().getFullYear()}${String(exportDeclarationId || '001').padStart(6, '0')}`;
+}
+
+// 获取当前出口报关单数据
+function getCurrentExportDeclarationData() {
+    // 这里应该获取当前页面的所有表单数据
+    // 简化演示，返回基本信息
+    return {
+        batchNo: 'BATCH-EXP-001',
+        tradeTerms: 'FOB',
+        transportMode: '海运',
+        declareDate: new Date().toISOString().split('T')[0],
+        items: [] // 商品明细
+    };
+}
+
+// 生成进口报关单ID
+function generateImportDeclarationId(countryCode) {
+    const countryPrefix = {
+        'thailand': 'TH',
+        'hungary': 'HU', 
+        'malaysia': 'MY',
+        'indonesia': 'ID',
+        'brazil': 'BR',
+        'vietnam': 'VN'
+    };
+    
+    const prefix = countryPrefix[countryCode] || 'IM';
+    const timestamp = Date.now().toString().slice(-6);
+    return `${prefix}${timestamp}`;
+}
+
+// 生成进口批次号
+function generateImportBatchNo(countryCode) {
+    const countryPrefix = {
+        'thailand': 'TH',
+        'hungary': 'HU',
+        'malaysia': 'MY', 
+        'indonesia': 'ID',
+        'brazil': 'BR',
+        'vietnam': 'VN'
+    };
+    
+    const prefix = countryPrefix[countryCode] || 'IM';
+    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `BATCH-${prefix}-${dateStr}-${randomNum}`;
+}
+
 // 导出函数供其他页面使用
 window.declarationEdit = {
     loadDeclarationData,
@@ -1276,5 +1725,13 @@ window.declarationEdit = {
     toggleDeclarationInspectionFields,
     toggleDeclarationAbnormalReasonField,
     validateDeclarationRequiredFields,
-    updateVehicleNumberFields
+    updateVehicleNumberFields,
+    confirmCustomsFromBottomButton,
+    completeCustomsDeclaration,
+    updateSubmitButton,
+    calculatePackageTypes,
+    calculateDeclarationPackageTypes,
+    createImportDeclarationForDestinationCountry,
+    getDestinationCountryFromDeclaration,
+    generateImportDeclarationData
 };

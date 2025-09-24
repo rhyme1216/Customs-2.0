@@ -252,14 +252,14 @@ let currentElementStatus = 'all'; // 当前选择的要素状态
 const hsCodeElementsConfig = {
     'default': [
         { key: 'brandType', name: '品牌类型', type: 'select', required: true, options: ['0-无品牌', '1-境内自主品牌', '2-境内收购品牌', '3-境外品牌(贴牌生产)', '4-境外品牌(其它)'] },
-        { key: 'brand', name: '品牌名', type: 'text', required: true, placeholder: '请输入品牌名' },
-        { key: 'model', name: '型号', type: 'text', required: true, placeholder: '请输入型号' },
+        { key: 'customsBrand', name: '关务品牌', type: 'text', required: true, placeholder: '请输入关务品牌' },
+        { key: 'customsModel', name: '关务型号', type: 'text', required: true, placeholder: '请输入关务型号' },
         { key: 'usage', name: '用途', type: 'text', required: true, placeholder: '请输入用途' }
     ],
     '8517120000': [
         { key: 'brandType', name: '品牌类型', type: 'select', required: true, options: ['0-无品牌', '1-境内自主品牌', '2-境内收购品牌', '3-境外品牌(贴牌生产)', '4-境外品牌(其它)'] },
-        { key: 'brand', name: '品牌名', type: 'text', required: true, placeholder: '请输入品牌名' },
-        { key: 'model', name: '型号', type: 'text', required: true, placeholder: '请输入型号' },
+        { key: 'customsBrand', name: '关务品牌', type: 'text', required: true, placeholder: '请输入关务品牌' },
+        { key: 'customsModel', name: '关务型号', type: 'text', required: true, placeholder: '请输入关务型号' },
         { key: 'usage', name: '用途', type: 'text', required: true, placeholder: '请输入用途' },
         { key: 'material', name: '材质', type: 'text', required: false, placeholder: '请输入材质' }
     ]
@@ -289,9 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新国家TAB徽标
     updateCountryTabBadges();
-    
-    // 设置是否产生订单默认值
-    setDefaultHasOrderValue();
     
     // 移除要素状态查询组件逻辑
     removeElementStatusQueryLogic();
@@ -464,11 +461,12 @@ function renderTableData(data) {
         return;
     }
     
-    const isChina = currentCountry === 'china';
+    const isChina = currentCountry === 'china' || currentCountry === 'gam';
     const countryName = currentCountry === 'china' ? '中国' :
                        currentCountry === 'thailand' ? '泰国' :
                        currentCountry === 'vietnam' ? '越南' :
                        currentCountry === 'malaysia' ? '马来' :
+                       currentCountry === 'gam' ? 'GAM' :
                        currentCountry === 'indonesia' ? '印尼' :
                        currentCountry === 'hungary' ? '匈牙利' :
                        currentCountry === 'brazil' ? '巴西' : '泰国';
@@ -531,6 +529,22 @@ function renderTableData(data) {
             if (column.key === 'domesticSku') {
                 html += `<td data-key="domesticSku" class="${className}" ${cellStyle}>
                     <a href="javascript:void(0)" class="sku-link" onclick="viewProductDetail('${row.domesticSku}')">${row.domesticSku}</a>
+                </td>`;
+            } else if (column.key === 'internationalSku') {
+                // 确保国际SKU符合8开头11位数字格式
+                let internationalSku = value;
+                if (!internationalSku || !/^8\d{10}$/.test(internationalSku)) {
+                    // 基于国内SKU生成8开头11位数字的国际SKU
+                    const domesticSkuSuffix = (row.domesticSku || '').slice(-6);
+                    const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+                    internationalSku = `8${domesticSkuSuffix}${randomSuffix}`.slice(0, 11);
+                    // 确保是11位数字
+                    if (internationalSku.length < 11) {
+                        internationalSku = internationalSku.padEnd(11, '0');
+                    }
+                }
+                html += `<td data-key="internationalSku" class="${className}" ${cellStyle}>
+                    <a href="javascript:void(0)" class="sku-link" onclick="viewInternationalSkuDetail('${internationalSku}')">${internationalSku}</a>
                 </td>`;
             } else if (column.key === 'productImage') {
                 html += `<td class="${className}" ${cellStyle}>
@@ -635,6 +649,9 @@ function generateActionButtons(row) {
     // 要素编辑按钮 - 蓝色链接样式
     if (currentCountry === 'china') {
         buttons += `<a href="javascript:void(0)" class="action-link" onclick="performElementEdit('${row.domesticSku}')">要素编辑</a>`;
+    } else if (currentCountry === 'gam') {
+        // GAM使用特殊的简化版编辑
+        buttons += `<a href="javascript:void(0)" class="action-link" onclick="performSimpleElementEdit('${row.domesticSku}')">要素编辑</a>`;
     } else {
         buttons += `<a href="javascript:void(0)" class="action-link" onclick="performSimpleElementEdit('${row.domesticSku}')">要素编辑</a>`;
     }
@@ -697,20 +714,34 @@ function performSimpleElementEdit(domesticSku, isSubsequent = false) {
 
 // 根据国内SKU查找商品数据
 function findProductByDomesticSku(domesticSku) {
+    // 生成符合8开头11位数字格式的国际SKU
+    const domesticSkuSuffix = domesticSku.slice(-6);
+    const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    let internationalSku = `8${domesticSkuSuffix}${randomSuffix}`.slice(0, 11);
+    // 确保是11位数字
+    if (internationalSku.length < 11) {
+        internationalSku = internationalSku.padEnd(11, '0');
+    }
+    
     // 这里应该从实际数据源查找，现在返回模拟数据
     return {
         domesticSku: domesticSku,
-        internationalSku: `INT${domesticSku.slice(-6)}`,
+        internationalSku: internationalSku,
         productName: `测试商品${domesticSku.slice(-2)}`,
         productNameEn: `Test Product ${domesticSku.slice(-2)}`,
         productNameLocal: `Local Product ${domesticSku.slice(-2)}`,
         chinaHscode: '8517120000',
         brand: 'TestBrand',
         model: 'Model123',
+        customsBrand: 'TestBrand', // 关务品牌默认与商品品牌相同
+        customsModel: 'Model123', // 关务型号默认与商品型号相同
         brandAuth: '按项目授权 (一单一议)',
         brandType: '1',
-        declarationElements: '品牌类型:1|品牌名:TestBrand|型号:Model123|用途:工业用',
+        buyerErp: `buyer${domesticSku.slice(-3)}`, // 采销ERP
+        productImage: null, // 商品主图，可以设置为实际图片URL
+        declarationElements: '品牌类型:1|关务品牌:TestBrand|关务型号:Model123|用途:工业用',
         declarationNameCn: '测试申报中文品名',
+        declarationNameEn: 'Test Declaration Name',
         elementStatus: 'pending-confirm'
     };
 }
@@ -786,10 +817,12 @@ function fillExistingElementData(elementString) {
                         break;
                     case '品牌名':
                     case '品牌':
-                        fieldKey = 'brand';
+                    case '关务品牌':
+                        fieldKey = 'customsBrand';
                         break;
                     case '型号':
-                        fieldKey = 'model';
+                    case '关务型号':
+                        fieldKey = 'customsModel';
                         break;
                     case '用途':
                         fieldKey = 'usage';
@@ -847,8 +880,14 @@ function savePendingConfirm() {
     // 生成申报要素字符串
     const elementString = generateElementString();
     
+    // 获取海关编码
+    const hscode = document.getElementById('modal-hscode').value.trim();
+    
     // 获取申报中文品名
     const declareNameCn = document.getElementById('modal-declare-name').value.trim();
+    
+    // 获取申报英文品名
+    const declareNameEn = document.getElementById('modal-declare-name-en').value.trim();
     
     // 获取品牌授权情况
     const brandAuthSelect = document.getElementById('modal-brand-auth-select');
@@ -868,21 +907,42 @@ function savePendingConfirm() {
         return;
     }
     
+    // 获取关务品牌和关务型号
+    const customsBrand = document.getElementById('modal-customs-brand').value.trim();
+    const customsModel = document.getElementById('modal-customs-model').value.trim();
+    
+    // 验证关务品牌和关务型号必填
+    if (!customsBrand) {
+        alert('请填写关务品牌');
+        return;
+    }
+    
+    if (!customsModel) {
+        alert('请填写关务型号');
+        return;
+    }
+    
     // 获取品牌类型
     const brandType = document.getElementById('element-brandType').value;
     
     console.log('保存待确认申报要素:', {
         domesticSku: currentEditingProduct.domesticSku,
+        hscode: hscode,
         elementString: elementString,
         declareNameCn: declareNameCn,
+        declareNameEn: declareNameEn,
+        customsBrand: customsBrand,
+        customsModel: customsModel,
         brandType: brandType,
         remarks: remarks
     });
     
     // 更新商品要素状态为待确认，并保存申报要素和申报中文品名
     updateProductElementStatus(currentEditingProduct.domesticSku, 'pending-confirm', {
+        hscode: hscode,
         elementString: elementString,
         declareNameCn: declareNameCn,
+        declareNameEn: declareNameEn,
         remarks: remarks
     });
     
@@ -900,6 +960,16 @@ function validateElementForm() {
         return false;
     }
     
+    // 验证中国HSCODE
+    const hscodeInput = document.getElementById('modal-hscode');
+    if (!hscodeInput.value.trim()) {
+        hscodeInput.style.borderColor = '#ff4d4f';
+        showErrorMessage('请填写中国HSCODE');
+        return false;
+    } else {
+        hscodeInput.style.borderColor = '#d9d9d9';
+    }
+    
     // 验证申报中文品名
     const declareNameInput = document.getElementById('modal-declare-name');
     if (!declareNameInput.value.trim()) {
@@ -908,6 +978,26 @@ function validateElementForm() {
         return false;
     } else {
         declareNameInput.style.borderColor = '#d9d9d9';
+    }
+    
+    // 验证关务品牌
+    const customsBrandInput = document.getElementById('modal-customs-brand');
+    if (!customsBrandInput.value.trim()) {
+        customsBrandInput.style.borderColor = '#ff4d4f';
+        showErrorMessage('请填写关务品牌');
+        return false;
+    } else {
+        customsBrandInput.style.borderColor = '#d9d9d9';
+    }
+    
+    // 验证关务型号
+    const customsModelInput = document.getElementById('modal-customs-model');
+    if (!customsModelInput.value.trim()) {
+        customsModelInput.style.borderColor = '#ff4d4f';
+        showErrorMessage('请填写关务型号');
+        return false;
+    } else {
+        customsModelInput.style.borderColor = '#d9d9d9';
     }
     
     // 验证必填项
@@ -950,16 +1040,30 @@ function confirmElement() {
     // 生成申报要素字符串
     const elementString = generateElementString();
     
+    // 获取海关编码
+    const hscode = document.getElementById('modal-hscode').value.trim();
+    
     // 获取申报中文品名
     const declareNameCn = document.getElementById('modal-declare-name').value.trim();
+    
+    // 获取申报英文品名
+    const declareNameEn = document.getElementById('modal-declare-name-en').value.trim();
+    
+    // 获取关务品牌和关务型号
+    const customsBrand = document.getElementById('modal-customs-brand').value.trim();
+    const customsModel = document.getElementById('modal-customs-model').value.trim();
     
     // 获取品牌类型
     const brandType = document.getElementById('element-brandType').value;
     
     console.log('保存申报要素:', {
         domesticSku: currentEditingProduct.domesticSku,
+        hscode: hscode,
         elementString: elementString,
         declareNameCn: declareNameCn,
+        declareNameEn: declareNameEn,
+        customsBrand: customsBrand,
+        customsModel: customsModel,
         brandType: brandType,
         isSubsequentEdit: currentEditingProduct.isSubsequentEdit,
         adjustmentReason: currentEditingProduct.adjustmentReason
@@ -967,8 +1071,10 @@ function confirmElement() {
     
     // 更新商品要素状态为已确认
     updateProductElementStatus(currentEditingProduct.domesticSku, 'confirmed', {
+        hscode: hscode,
         elementString: elementString,
-        declareNameCn: declareNameCn
+        declareNameCn: declareNameCn,
+        declareNameEn: declareNameEn
     });
     
     showSuccessMessage('要素确认成功！');
@@ -1011,9 +1117,32 @@ function fillProductInfo(productData) {
         console.log('点击SKU链接:', productData.domesticSku);
     };
     
-    document.getElementById('modal-international-sku').textContent = productData.internationalSku || '-';
+    // 国际SKU显示为蓝色链接样式，生成8开头11位数字格式
+    const internationalSkuElement = document.getElementById('modal-international-sku');
+    let internationalSku = productData.internationalSku;
+    
+    // 如果国际SKU不符合8开头11位数字格式，则生成一个
+    if (!internationalSku || !/^8\d{10}$/.test(internationalSku)) {
+        // 基于国内SKU生成8开头11位数字的国际SKU
+        const domesticSkuSuffix = (productData.domesticSku || '').slice(-6);
+        const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        internationalSku = `8${domesticSkuSuffix}${randomSuffix}`.slice(0, 11);
+        // 确保是11位数字
+        if (internationalSku.length < 11) {
+            internationalSku = internationalSku.padEnd(11, '0');
+        }
+    }
+    
+    internationalSkuElement.textContent = internationalSku;
+    internationalSkuElement.className = 'sku-link';
+    internationalSkuElement.href = 'javascript:void(0)';
+    internationalSkuElement.onclick = function() {
+        // 这里可以添加国际SKU点击跳转逻辑
+        console.log('点击国际SKU链接:', internationalSku);
+    };
+    
     document.getElementById('modal-product-name').textContent = productData.productName || productData.productTitle || '-';
-    document.getElementById('modal-hscode').textContent = productData.chinaHscode || productData.hscode || '-';
+    document.getElementById('modal-hscode').value = productData.chinaHscode || productData.hscode || '';
     
     // 填充商品主图
     const productImage = document.getElementById('modal-product-image');
@@ -1027,13 +1156,43 @@ function fillProductInfo(productData) {
         productImagePlaceholder.style.display = 'inline';
     }
     
+    // 填充采销ERP
+    document.getElementById('modal-buyer-erp').textContent = productData.buyerErp || '-';
+    
     // 填充新增字段
     document.getElementById('modal-function').textContent = productData.function || '-';
     document.getElementById('modal-usage').textContent = productData.usage || '-';
     document.getElementById('modal-material').textContent = productData.material || '-';
     document.getElementById('modal-principle').textContent = productData.principle || '-';
-    document.getElementById('modal-brand').textContent = productData.brand || '-';
-    document.getElementById('modal-model').textContent = productData.model || '-';
+    
+    // 填充商品品牌和商品型号（只展示）
+    document.getElementById('modal-product-brand').textContent = productData.brand || '-';
+    document.getElementById('modal-product-model').textContent = productData.model || '-';
+    
+    // 填充关务品牌和关务型号（可编辑，默认值与商品品牌/型号相同）
+    const customsBrandInput = document.getElementById('modal-customs-brand');
+    const customsModelInput = document.getElementById('modal-customs-model');
+    
+    // 设置默认值为商品品牌和型号
+    customsBrandInput.value = productData.customsBrand || productData.brand || '';
+    customsModelInput.value = productData.customsModel || productData.model || '';
+    
+    // 为关务品牌和关务型号输入框添加事件监听，同步到申报要素字段
+    customsBrandInput.addEventListener('input', function() {
+        const elementCustomsBrand = document.getElementById('element-customsBrand');
+        if (elementCustomsBrand) {
+            elementCustomsBrand.value = this.value;
+            updateElementPreview();
+        }
+    });
+    
+    customsModelInput.addEventListener('input', function() {
+        const elementCustomsModel = document.getElementById('element-customsModel');
+        if (elementCustomsModel) {
+            elementCustomsModel.value = this.value;
+            updateElementPreview();
+        }
+    });
     
     // 品牌授权显示为蓝色链接样式
     const brandAuthElements = document.querySelectorAll('#modal-brand-auth');
@@ -1052,6 +1211,10 @@ function fillProductInfo(productData) {
     // 申报中文品名设置输入框的值
     const declareNameInput = document.getElementById('modal-declare-name');
     declareNameInput.value = productData.declarationNameCn || '';
+    
+    // 申报英文品名设置输入框的值
+    const declareNameEnInput = document.getElementById('modal-declare-name-en');
+    declareNameEnInput.value = productData.declarationNameEn || '';
 }
 
 /**
@@ -1059,8 +1222,38 @@ function fillProductInfo(productData) {
  * @param {Object} productData - 商品数据
  */
 function fillSimpleProductInfo(productData) {
-    document.getElementById('simple-modal-domestic-sku').textContent = productData.domesticSku || '-';
-    document.getElementById('simple-modal-international-sku').textContent = productData.internationalSku || '-';
+    // 国内SKU显示为蓝色链接样式
+    const domesticSkuElement = document.getElementById('simple-modal-domestic-sku');
+    domesticSkuElement.textContent = productData.domesticSku || '-';
+    domesticSkuElement.className = 'sku-link';
+    domesticSkuElement.href = 'javascript:void(0)';
+    domesticSkuElement.onclick = function() {
+        console.log('点击SKU链接:', productData.domesticSku);
+    };
+    
+    // 国际SKU显示为蓝色链接样式，生成8开头11位数字格式
+    const internationalSkuElement = document.getElementById('simple-modal-international-sku');
+    let internationalSku = productData.internationalSku;
+    
+    // 如果国际SKU不符合8开头11位数字格式，则生成一个
+    if (!internationalSku || !/^8\d{10}$/.test(internationalSku)) {
+        // 基于国内SKU生成8开头11位数字的国际SKU
+        const domesticSkuSuffix = (productData.domesticSku || '').slice(-6);
+        const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        internationalSku = `8${domesticSkuSuffix}${randomSuffix}`.slice(0, 11);
+        // 确保是11位数字
+        if (internationalSku.length < 11) {
+            internationalSku = internationalSku.padEnd(11, '0');
+        }
+    }
+    
+    internationalSkuElement.textContent = internationalSku;
+    internationalSkuElement.className = 'sku-link';
+    internationalSkuElement.href = 'javascript:void(0)';
+    internationalSkuElement.onclick = function() {
+        console.log('点击国际SKU链接:', internationalSku);
+    };
+    
     document.getElementById('simple-modal-product-name').textContent = productData.productName || '-';
     document.getElementById('simple-modal-product-name-en').textContent = productData.productNameEn || '-';
     document.getElementById('simple-modal-product-name-local').textContent = productData.productNameLocal || '-';
@@ -1080,12 +1273,39 @@ function fillSimpleProductInfo(productData) {
     } else if (currentCountry === 'vietnam') {
         hscodeValue = productData.vietnamHscode || '-';
     } else if (currentCountry === 'malaysia') {
-        hscodeValue = productData.malaysiaHscode || '-';
+        hscodeValue = productData.malaysiaHscode || '';
+    } else if (currentCountry === 'gam') {
+        // GAM使用中国海关编码
+        hscodeValue = productData.chinaHscode || '';
     }
-    document.getElementById('simple-modal-hscode').textContent = hscodeValue;
+    // 只有当hscodeValue不是'-'时才设置值
+    const hscodeInput = document.getElementById('simple-modal-hscode');
+    if (hscodeInput) {
+        hscodeInput.value = hscodeValue === '-' ? '' : hscodeValue;
+    }
+    
+    // 填充商品主图
+    const simpleProductImage = document.getElementById('simple-modal-product-image');
+    const simpleProductImagePlaceholder = document.getElementById('simple-modal-product-image-placeholder');
+    if (productData.productImage) {
+        simpleProductImage.src = productData.productImage;
+        simpleProductImage.style.display = 'block';
+        simpleProductImagePlaceholder.style.display = 'none';
+    } else {
+        simpleProductImage.style.display = 'none';
+        simpleProductImagePlaceholder.style.display = 'inline';
+    }
+    
+    // 填充采销ERP
+    document.getElementById('simple-modal-buyer-erp').textContent = productData.buyerErp || '-';
     
     document.getElementById('simple-modal-brand').textContent = productData.brand || '-';
     document.getElementById('simple-modal-model').textContent = productData.model || '-';
+    
+    // 填充关务品牌和关务型号（不可编辑，仅展示）
+    document.getElementById('simple-modal-customs-brand-display').textContent = productData.customsBrand || productData.brand || '-';
+    document.getElementById('simple-modal-customs-model-display').textContent = productData.customsModel || productData.model || '-';
+    
     document.getElementById('simple-modal-brand-auth-display').textContent = productData.brandAuth || '-';
     document.getElementById('simple-modal-brand-type-display').textContent = productData.brandType || '-';
     
@@ -1109,7 +1329,8 @@ function updateSimpleModalLabels() {
         'hungary': '匈牙利',
         'brazil': '巴西',
         'vietnam': '越南',
-        'malaysia': '马来'
+        'malaysia': '马来',
+        'gam': 'GAM'
     };
     
     // 获取海关编码名称映射
@@ -1120,11 +1341,50 @@ function updateSimpleModalLabels() {
         'malaysia': 'HS Code',
         'indonesia': 'HS Code',
         'hungary': 'TARIC Code',
-        'brazil': 'NCM Code'
+        'brazil': 'NCM Code',
+        'gam': '中国海关编码'
     };
     
     const countryName = countryNameMap[currentCountry] || '当地';
     const hscodeName = hscodeNameMap[currentCountry] || 'HS Code';
+    
+    // GAM特殊处理：隐藏商品小语种名称和申报小语种品名
+    const productNameLocalRow = document.getElementById('simple-modal-product-name-local-label')?.closest('.info-item');
+    const declareNameLocalRow = document.getElementById('simple-modal-declare-name-local-label')?.closest('.info-item');
+    
+    if (currentCountry === 'gam') {
+        // GAM国家：隐藏商品小语种名称和申报小语种品名
+        if (productNameLocalRow) {
+            productNameLocalRow.style.display = 'none';
+        }
+        if (declareNameLocalRow) {
+            declareNameLocalRow.style.display = 'none';
+        }
+        
+        // 海关编码设置为不可编辑
+        const hscodeInput = document.getElementById('simple-modal-hscode');
+        if (hscodeInput) {
+            hscodeInput.readOnly = true;
+            hscodeInput.style.backgroundColor = '#f5f5f5';
+            hscodeInput.style.cursor = 'not-allowed';
+        }
+    } else {
+        // 其他国家：显示这些字段
+        if (productNameLocalRow) {
+            productNameLocalRow.style.display = '';
+        }
+        if (declareNameLocalRow) {
+            declareNameLocalRow.style.display = '';
+        }
+        
+        // 海关编码设置为可编辑
+        const hscodeInput = document.getElementById('simple-modal-hscode');
+        if (hscodeInput) {
+            hscodeInput.readOnly = false;
+            hscodeInput.style.backgroundColor = '';
+            hscodeInput.style.cursor = '';
+        }
+    }
     
     // 更新商品当地语种名称标签
     const productNameLocalLabel = document.getElementById('simple-modal-product-name-local-label');
@@ -1135,7 +1395,21 @@ function updateSimpleModalLabels() {
     // 更新海关编码标签
     const hscodeLabel = document.getElementById('simple-modal-hscode-label');
     if (hscodeLabel) {
-        hscodeLabel.textContent = `${hscodeName}：`;
+        if (currentCountry === 'gam') {
+            hscodeLabel.innerHTML = `${hscodeName}：`;  // GAM不可编辑，去掉必填标识
+        } else {
+            hscodeLabel.innerHTML = `${hscodeName}：<span class="required" style="color: red;">*</span>`;
+        }
+    }
+    
+    // 更新海关编码输入框的placeholder
+    const hscodeInput = document.getElementById('simple-modal-hscode');
+    if (hscodeInput) {
+        if (currentCountry === 'gam') {
+            hscodeInput.placeholder = `显示中国海关编码`;
+        } else {
+            hscodeInput.placeholder = `请输入${hscodeName}`;
+        }
     }
     
     // 更新申报当地品名标签
@@ -1222,6 +1496,27 @@ function generateRequiredElementFields(hscode) {
             input.type = 'text';
             input.id = `element-${field.key}`;
             input.placeholder = field.placeholder || `请输入${field.name}`;
+            
+            // 如果是关务品牌或关务型号字段，从弹窗中的输入框获取默认值
+            if (field.key === 'customsBrand') {
+                const customsBrandInput = document.getElementById('modal-customs-brand');
+                if (customsBrandInput) {
+                    input.value = customsBrandInput.value || '';
+                    // 添加事件监听，同步到弹窗输入框
+                    input.addEventListener('input', function() {
+                        customsBrandInput.value = this.value;
+                    });
+                }
+            } else if (field.key === 'customsModel') {
+                const customsModelInput = document.getElementById('modal-customs-model');
+                if (customsModelInput) {
+                    input.value = customsModelInput.value || '';
+                    // 添加事件监听，同步到弹窗输入框
+                    input.addEventListener('input', function() {
+                        customsModelInput.value = this.value;
+                    });
+                }
+            }
         }
         
         // 检查是否为必填字段或材质字段
@@ -1281,11 +1576,11 @@ function generateElementString() {
                 case 'brandType':
                     fieldName = '品牌类型';
                     break;
-                case 'brand':
-                    fieldName = '品牌名';
+                case 'customsBrand':
+                    fieldName = '关务品牌';
                     break;
-                case 'model':
-                    fieldName = '型号';
+                case 'customsModel':
+                    fieldName = '关务型号';
                     break;
                 case 'usage':
                     fieldName = '用途';
@@ -1331,6 +1626,16 @@ function clearElementForm() {
         input.style.borderColor = '#d9d9d9';
     });
     
+    // 清空关务品牌和关务型号输入框
+    const customsBrandInput = document.getElementById('modal-customs-brand');
+    const customsModelInput = document.getElementById('modal-customs-model');
+    if (customsBrandInput) customsBrandInput.value = '';
+    if (customsModelInput) customsModelInput.value = '';
+    
+    // 清空申报英文品名输入框
+    const declareNameEnInput = document.getElementById('modal-declare-name-en');
+    if (declareNameEnInput) declareNameEnInput.value = '';
+    
     // 清空预览
     const previewElement = document.getElementById('element-preview');
     if (previewElement) {
@@ -1361,21 +1666,39 @@ function abandonSimpleElementEdit() {
 function saveSimplePendingConfirm() {
     const declareNameEn = document.getElementById('simple-modal-declare-name-en').value.trim();
     const declareNameLocal = document.getElementById('simple-modal-declare-name-local').value.trim();
+    const hscode = document.getElementById('simple-modal-hscode').value.trim();
     
+    // GAM国家不需要验证海关编码（不可编辑），其他国家需要验证
+    if (currentCountry !== 'gam' && !hscode) {
+        showErrorMessage('请填写海关编码');
+        return;
+    }
+    
+    // 验证申报英文品名必填
     if (!declareNameEn) {
         showErrorMessage('请填写申报英文品名');
         return;
     }
     
+    // 获取关务品牌和关务型号的显示值（不可编辑）
+    const customsBrand = document.getElementById('simple-modal-customs-brand-display').textContent;
+    const customsModel = document.getElementById('simple-modal-customs-model-display').textContent;
+    
     console.log('保存简化版待确认:', {
         domesticSku: currentSimpleEditingProduct.domesticSku,
+        hscode: hscode,
         declareNameEn: declareNameEn,
-        declareNameLocal: declareNameLocal
+        declareNameLocal: declareNameLocal,
+        customsBrand: customsBrand,
+        customsModel: customsModel
     });
     
     updateProductElementStatus(currentSimpleEditingProduct.domesticSku, 'pending-confirm', {
+        hscode: hscode,
         declareNameEn: declareNameEn,
-        declareNameLocal: declareNameLocal
+        declareNameLocal: declareNameLocal,
+        customsBrand: customsBrand,
+        customsModel: customsModel
     });
     
     showSuccessMessage('已保存为待确认状态！');
@@ -1389,25 +1712,43 @@ function saveSimplePendingConfirm() {
 function confirmSimpleElement() {
     const declareNameEn = document.getElementById('simple-modal-declare-name-en').value.trim();
     const declareNameLocal = document.getElementById('simple-modal-declare-name-local').value.trim();
+    const hscode = document.getElementById('simple-modal-hscode').value.trim();
     
     // 获取备注信息
     const remarks = document.getElementById('simple-element-remarks').value.trim();
     
+    // GAM国家不需要验证海关编码（不可编辑），其他国家需要验证
+    if (currentCountry !== 'gam' && !hscode) {
+        showErrorMessage('请填写海关编码');
+        return;
+    }
+    
+    // 验证申报英文品名必填
     if (!declareNameEn) {
         showErrorMessage('请填写申报英文品名');
         return;
     }
     
+    // 获取关务品牌和关务型号的显示值（不可编辑）
+    const customsBrand = document.getElementById('simple-modal-customs-brand-display').textContent;
+    const customsModel = document.getElementById('simple-modal-customs-model-display').textContent;
+    
     console.log('确认简化版要素:', {
         domesticSku: currentSimpleEditingProduct.domesticSku,
+        hscode: hscode,
         declareNameEn: declareNameEn,
         declareNameLocal: declareNameLocal,
+        customsBrand: customsBrand,
+        customsModel: customsModel,
         remarks: remarks
     });
     
     updateProductElementStatus(currentSimpleEditingProduct.domesticSku, 'confirmed', {
+        hscode: hscode,
         declareNameEn: declareNameEn,
         declareNameLocal: declareNameLocal,
+        customsBrand: customsBrand,
+        customsModel: customsModel,
         remarks: remarks
     });
     
@@ -1465,6 +1806,14 @@ function viewProductDetail(domesticSku) {
 }
 
 /**
+ * 查看国际SKU详情
+ */
+function viewInternationalSkuDetail(internationalSku) {
+    console.log('查看国际SKU详情:', internationalSku);
+    // 这里可以实现跳转到国际SKU详情页的逻辑
+}
+
+/**
  * 更新分页信息
  */
 function updatePaginationInfo(dataLength) {
@@ -1496,7 +1845,6 @@ function searchProducts() {
         dataSource: multiSelectComponents['data-source-select']?.getSelectedValues() || [],
         serviceProvider: multiSelectComponents['service-provider']?.getSelectedValues() || [],
         elementStatus: multiSelectComponents['element-status']?.getSelectedValues() || [],
-        hasOrder: multiSelectComponents['has-order']?.getSelectedValues() || [],
         creatorErp: document.getElementById('creator-erp-input').value.trim(),
         createTimeStart: document.getElementById('create-time-start-input').value,
         createTimeEnd: document.getElementById('create-time-end-input').value,
@@ -1659,11 +2007,12 @@ function generateTableHeader() {
     }
     
     // 使用与关务商品评估页面完全相同的动态列生成逻辑
-    const isChina = currentCountry === 'china';
+    const isChina = currentCountry === 'china' || currentCountry === 'gam';
     const countryName = currentCountry === 'china' ? '中国' :
                        currentCountry === 'thailand' ? '泰国' :
                        currentCountry === 'vietnam' ? '越南' :
                        currentCountry === 'malaysia' ? '马来' :
+                       currentCountry === 'gam' ? 'GAM' :
                        currentCountry === 'indonesia' ? '印尼' :
                        currentCountry === 'hungary' ? '匈牙利' :
                        currentCountry === 'brazil' ? '巴西' : '泰国';
@@ -1788,30 +2137,6 @@ function updateElementStatusBadges() {
     });
 }
 
-// 设置是否产生订单默认值
-function setDefaultHasOrderValue() {
-    const hasOrderContainer = document.getElementById('has-order');
-    if (hasOrderContainer) {
-        const display = hasOrderContainer.querySelector('.multi-select-display .multi-select-placeholder');
-        const yesOption = hasOrderContainer.querySelector('[data-value="yes"]');
-        const yesCheckbox = yesOption ? yesOption.querySelector('.multi-select-checkbox') : null;
-        
-        // 设置显示文本
-        if (display) {
-            display.textContent = '是';
-            display.classList.remove('multi-select-placeholder');
-        }
-        
-        // 设置选中状态
-        if (yesOption && yesCheckbox) {
-            yesOption.classList.add('selected');
-            yesCheckbox.classList.add('checked');
-        }
-        
-        console.log('已设置是否产生订单默认值为"是"');
-    }
-}
-
 // 移除要素状态查询组件的相关逻辑
 function removeElementStatusQueryLogic() {
     // 从多选组件中移除要素状态组件
@@ -1865,7 +2190,7 @@ function updateCountryTabBadges() {
     }
     
     // 国家列表
-    const countries = ['china', 'thailand', 'indonesia', 'hungary', 'brazil', 'vietnam', 'malaysia'];
+    const countries = ['china', 'thailand', 'indonesia', 'hungary', 'brazil', 'vietnam', 'malaysia', 'gam'];
     
     countries.forEach(country => {
         const countryData = window.staticMockData[country];

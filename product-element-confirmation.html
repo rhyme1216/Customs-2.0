@@ -29,7 +29,7 @@
                 <div class="submenu open" id="customs-submenu">
                     <div class="submenu-item" onclick="window.location.href='customs-product-management.html'">关务商品评估</div>
                     <div class="submenu-item active" onclick="window.location.href='product-element-confirmation.html'">商品要素确认</div>
-                    <div class="submenu-item" onclick="window.location.href='customs-declaration-management.html'">报关单管理</div>
+                    <div class="submenu-item" onclick="window.location.href='customs-declaration-management.html'">出口报关单管理</div>
                 </div>
             </div>
         </div>
@@ -90,27 +90,7 @@
                     <div class="search-row">
                         
                         
-                        <div class="form-group" id="has-order-group">
-                            <label for="has-order">是否产生订单：</label>
-                            <div class="multi-select-container" id="has-order" data-placeholder="请选择...">
-                                <div class="multi-select-display">
-                                    <div class="multi-select-tags">
-                                        <span class="multi-select-tag">是</span>
-                                    </div>
-                                    <span class="multi-select-arrow">▼</span>
-                                </div>
-                                <div class="multi-select-dropdown">
-                                    <div class="multi-select-option selected" data-value="yes">
-                                        <div class="multi-select-checkbox checked"></div>
-                                        <span class="multi-select-option-text">是</span>
-                                    </div>
-                                    <div class="multi-select-option" data-value="no">
-                                        <div class="multi-select-checkbox"></div>
-                                        <span class="multi-select-option-text">否</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
                     <!-- 第三行：4个组件 -->
                     <div class="search-row">
@@ -173,6 +153,10 @@
                     马来
                     <span class="badge">0</span>
                 </button>
+                <button class="tab-btn" data-country="gam">
+                    GAM
+                    <span class="badge">0</span>
+                </button>
             </div>
 
             <!-- 操作按钮区域 -->
@@ -208,7 +192,6 @@
                                 <th>关务评估状态</th>
                                 <th>强制性认证状态</th>
                                 <th>商品评估状态</th>
-                                <th>是否产生订单</th>
                                 <th>首次产生订单时间</th>
                                 <th>申报要素</th>
                                 <th>申报中文品名</th>
@@ -224,7 +207,7 @@
                         <tbody id="table-body">
                             <!-- 空列表，数据将通过JavaScript动态加载 -->
                             <tr class="empty-row">
-                                <td colspan="26" class="empty-message">
+                                <td colspan="25" class="empty-message">
                                     <div class="empty-content">
                                         <div class="empty-icon">📦</div>
                                         <div class="empty-text">暂无数据</div>
@@ -274,15 +257,15 @@
                         </div>
                         <div class="info-item">
                             <label>国际SKU：</label>
-                            <span id="modal-international-sku">-</span>
+                            <a href="javascript:void(0)" id="modal-international-sku" class="sku-link">-</a>
                         </div>
                         <div class="info-item">
                             <label>商品中文名称：</label>
                             <span id="modal-product-name">-</span>
                         </div>
                         <div class="info-item">
-                            <label>中国HSCODE：</label>
-                            <span id="modal-hscode">-</span>
+                            <label>中国HSCODE：<span class="required" style="color: red;">*</span></label>
+                            <input type="text" id="modal-hscode" placeholder="请输入中国HSCODE" required>
                         </div>
                         <div class="info-item">
                             <label>商品主图：</label>
@@ -290,6 +273,10 @@
                                 <img id="modal-product-image" src="" alt="商品主图" class="product-thumbnail" style="display: none;">
                                 <span id="modal-product-image-placeholder">暂无图片</span>
                             </div>
+                        </div>
+                        <div class="info-item">
+                            <label>采销ERP：</label>
+                            <span id="modal-buyer-erp">-</span>
                         </div>
                         <div class="info-item">
                             <label>功能：</label>
@@ -308,12 +295,20 @@
                             <span id="modal-principle">-</span>
                         </div>
                         <div class="info-item">
-                            <label>品牌：</label>
-                            <span id="modal-brand">-</span>
+                            <label>商品品牌：</label>
+                            <span id="modal-product-brand">-</span>
                         </div>
                         <div class="info-item">
-                            <label>型号：</label>
-                            <span id="modal-model">-</span>
+                            <label>商品型号：</label>
+                            <span id="modal-product-model">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>关务品牌：<span class="required" style="color: red;">*</span></label>
+                            <input type="text" id="modal-customs-brand" placeholder="请输入关务品牌" required>
+                        </div>
+                        <div class="info-item">
+                            <label>关务型号：<span class="required" style="color: red;">*</span></label>
+                            <input type="text" id="modal-customs-model" placeholder="请输入关务型号" required>
                         </div>
                         <div class="info-item">
                             <label>品牌授权：</label>
@@ -322,6 +317,10 @@
                         <div class="info-item">
                             <label>申报中文品名：<span class="required" style="color: red;">*</span></label>
                             <input type="text" id="modal-declare-name" placeholder="请输入申报中文品名" required>
+                        </div>
+                        <div class="info-item">
+                            <label>申报英文品名：</label>
+                            <input type="text" id="modal-declare-name-en" placeholder="请输入申报英文品名">
                         </div>
                         <div class="info-item">
                             <label>品牌授权情况：<span class="required" style="color: red;">*</span></label>
@@ -408,7 +407,7 @@
                         </div>
                         <div class="info-item">
                             <label>国际SKU：</label>
-                            <span id="simple-modal-international-sku">-</span>
+                            <a href="javascript:void(0)" id="simple-modal-international-sku" class="sku-link">-</a>
                         </div>
                         <div class="info-item">
                             <label>商品中文名称：</label>
@@ -423,8 +422,19 @@
                             <span id="simple-modal-product-name-local">-</span>
                         </div>
                         <div class="info-item">
-                            <label id="simple-modal-hscode-label">海关编码：</label>
-                            <span id="simple-modal-hscode">-</span>
+                            <label id="simple-modal-hscode-label">海关编码：<span class="required" style="color: red;">*</span></label>
+                            <input type="text" id="simple-modal-hscode" placeholder="请输入海关编码" required>
+                        </div>
+                        <div class="info-item">
+                            <label>商品主图：</label>
+                            <div class="product-image-container">
+                                <img id="simple-modal-product-image" src="" alt="商品主图" class="product-thumbnail" style="display: none;">
+                                <span id="simple-modal-product-image-placeholder">暂无图片</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <label>采销ERP：</label>
+                            <span id="simple-modal-buyer-erp">-</span>
                         </div>
                         <div class="info-item">
                             <label>品牌：</label>
@@ -433,6 +443,14 @@
                         <div class="info-item">
                             <label>型号：</label>
                             <span id="simple-modal-model">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>关务品牌：</label>
+                            <span id="simple-modal-customs-brand-display">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>关务型号：</label>
+                            <span id="simple-modal-customs-model-display">-</span>
                         </div>
                         <div class="info-item">
                             <label>品牌授权：</label>

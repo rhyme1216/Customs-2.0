@@ -30,7 +30,7 @@
                 <div class="submenu open" id="customs-submenu">
                     <div class="submenu-item" onclick="window.location.href='customs-product-management.html'">关务商品评估</div>
                     <div class="submenu-item" onclick="window.location.href='product-element-confirmation.html'">商品要素确认</div>
-                    <div class="submenu-item active" onclick="window.location.href='customs-declaration-management.html'">报关单管理</div>
+                    <div class="submenu-item active" onclick="window.location.href='customs-declaration-management.html'">出口报关单管理</div>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
                 <span class="separator">></span>
                 <span>关务管理</span>
                 <span class="separator">></span>
-                <span onclick="window.location.href='customs-declaration-management.html'" style="cursor: pointer;">报关单管理</span>
+                <span onclick="window.location.href='customs-declaration-management.html'" style="cursor: pointer;">出口报关单管理</span>
                 <span class="separator">></span>
                 <span>编辑报关单</span>
             </div>
@@ -66,13 +66,13 @@
                             <label>生产销售单位：</label>
                             <input type="text" id="production-unit" value="深圳京东工业数智供应链有限公司" readonly>
                         </div>
-                    </div>
-                    
-                    <div class="info-row">
                         <div class="form-group">
                             <label>离境口岸：</label>
                             <input type="text" id="departure-port" value="深圳" readonly>
                         </div>
+                    </div>
+                    
+                    <div class="info-row">
                         <div class="form-group">
                             <label>指运港口：</label>
                             <input type="text" id="destination-port" value="洛杉矶" readonly>
@@ -81,9 +81,6 @@
                             <label>运抵国/地区：</label>
                             <input type="text" id="destination-country" value="美国" readonly>
                         </div>
-                    </div>
-                    
-                    <div class="info-row">
                         <div class="form-group">
                             <label>贸易条款：</label>
                             <input type="text" id="trade-terms" value="FOB" readonly>
@@ -112,13 +109,13 @@
                                 <option value="固定设施运输">固定设施运输</option>
                             </select>
                         </div>
+                    </div>
+                    
+                    <div class="info-row">
                         <div class="form-group">
                             <label>航次/航班号：</label>
                             <input type="text" id="voyage-flight" value="MSC001" readonly>
                         </div>
-                    </div>
-                    
-                    <div class="info-row">
                         <div class="form-group">
                             <label>ETD：</label>
                             <input type="date" id="etd" value="2024-01-15" readonly>
@@ -168,15 +165,17 @@
                                         <th>内贸段订单号</th>
                                         <th>国际订单号</th>
                                         <th>集装箱号/车号</th>
+                                        <th>商品中文标题</th>
                                         <th>包装编号</th>
+                                        <th>包装种类</th>
                                         <th>长（m）</th>
                                         <th>宽（m）</th>
                                         <th>高（m）</th>
                                         <th>HSCode</th>
                                         <th>申报要素</th>
                                         <th>申报中文品名</th>
-                                        <th class="editable">品牌 *</th>
-                                        <th class="editable">型号 *</th>
+                                        <th>关务品牌（不可编辑）</th>
+                                        <th>关务型号（不可编辑）</th>
                                         <th>数量</th>
                                         <th class="editable">成交单位 *</th>
                                         <th>金额</th>

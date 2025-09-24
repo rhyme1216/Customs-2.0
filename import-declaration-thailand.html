@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>出口报关单管理</title>
+    <title>泰国进口报关单管理</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="customs-declaration-management.css">
+    <link rel="stylesheet" href="import-declaration-management.css">
 </head>
 <body>
     <div class="sidebar">
@@ -29,8 +29,8 @@
                 <div class="submenu open" id="customs-submenu">
                     <div class="submenu-item" onclick="window.location.href='customs-product-management.html'">关务商品评估</div>
                     <div class="submenu-item" onclick="window.location.href='product-element-confirmation.html'">商品要素确认</div>
-                    <div class="submenu-item active">出口报关单管理</div>
-                    <div class="submenu-item" onclick="window.location.href='import-declaration-thailand.html'">泰国进口报关单管理</div>
+                    <div class="submenu-item" onclick="window.location.href='customs-declaration-management.html'">出口报关单管理</div>
+                    <div class="submenu-item active">泰国进口报关单管理</div>
                     <div class="submenu-item" onclick="window.location.href='import-declaration-hungary.html'">匈牙利进口报关单管理</div>
                     <div class="submenu-item" onclick="window.location.href='import-declaration-malaysia.html'">马来西亚进口报关单管理</div>
                     <div class="submenu-item" onclick="window.location.href='import-declaration-indonesia.html'">印尼进口报关单管理</div>
@@ -49,30 +49,26 @@
                 <span class="separator">></span>
                 <span>关务管理</span>
                 <span class="separator">></span>
-                <span>出口报关单管理</span>
+                <span>泰国进口报关单管理</span>
             </div>
 
             <!-- 状态TAB区域 -->
             <div class="status-tabs">
                 <button class="status-tab-btn active" data-status="all">
                     全部
-                    <span class="badge">176</span>
-                </button>
-                <button class="status-tab-btn" data-status="awaiting-receipt">
-                    待收货
-                    <span class="badge">20</span>
+                    <span class="badge">58</span>
                 </button>
                 <button class="status-tab-btn" data-status="pending">
                     待报关
-                    <span class="badge">23</span>
+                    <span class="badge">12</span>
                 </button>
                 <button class="status-tab-btn" data-status="processing">
                     报关中
-                    <span class="badge">89</span>
+                    <span class="badge">31</span>
                 </button>
                 <button class="status-tab-btn" data-status="completed">
                     报关完成
-                    <span class="badge">44</span>
+                    <span class="badge">15</span>
                 </button>
             </div>
 
@@ -85,8 +81,12 @@
                             <input type="text" id="batch-no" placeholder="请输入批次号">
                         </div>
                         <div class="form-group">
-                            <label>报关单号：</label>
-                            <input type="text" id="declaration-no" placeholder="请输入报关单号">
+                            <label>进口报关单号：</label>
+                            <input type="text" id="declaration-no" placeholder="请输入进口报关单号">
+                        </div>
+                        <div class="form-group">
+                            <label>对应出口报关单号：</label>
+                            <input type="text" id="export-declaration-no" placeholder="请输入对应出口报关单号">
                         </div>
                         <div class="form-group">
                             <label>贸易条款：</label>
@@ -98,17 +98,6 @@
                                 <option value="EXW">EXW</option>
                                 <option value="DDP">DDP</option>
                                 <option value="DDU">DDU</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>监管方式：</label>
-                            <select id="supervision-mode">
-                                <option value="">请选择</option>
-                                <option value="0110">一般贸易</option>
-                                <option value="1210">保税跨境贸易电子商务</option>
-                                <option value="9610">跨境贸易电子商务</option>
-                                <option value="1239">保税跨境贸易电子商务A</option>
-                                <option value="9710">跨境电子商务出口海外仓</option>
                             </select>
                         </div>
                     </div>
@@ -137,44 +126,11 @@
                             <input type="date" id="declaration-date" placeholder="请选择申报日期">
                         </div>
                     </div>
-                    
-                    <div class="search-row">
-                        <div class="form-group">
-                            <label>订单国家：</label>
-                            <select id="destination-country">
-                                <option value="">请选择</option>
-                                <option value="泰国">泰国</option>
-                                <option value="马来西亚">马来西亚</option>
-                                <option value="越南">越南</option>
-                                <option value="印尼">印尼</option>
-                                <option value="匈牙利">匈牙利</option>
-                                <option value="巴西">巴西</option>
-                                <option value="GAM">GAM</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>目的国家：</label>
-                            <select id="target-country">
-                                <option value="">请选择</option>
-                                <option value="澳大利亚">澳大利亚</option>
-                                <option value="沙特">沙特</option>
-                                <option value="乌兹别克斯坦">乌兹别克斯坦</option>
-                                <option value="德国">德国</option>
-                                <option value="泰国">泰国</option>
-                                <option value="马来西亚">马来西亚</option>
-                                <option value="越南">越南</option>
-                                <option value="印尼">印尼</option>
-                                <option value="匈牙利">匈牙利</option>
-                                <option value="巴西">巴西</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
                 
                 <div class="search-actions">
                     <button class="btn btn-primary" onclick="searchDeclarations()">查询</button>
                     <button class="btn btn-secondary" onclick="resetSearch()">重置</button>
-                    
                 </div>
             </div>
 
@@ -196,16 +152,16 @@
                                     <input type="checkbox" id="select-all">
                                 </th>
                                 <th class="fixed-column batch-column">批次号</th>
-                                <th class="scrollable-column">报关单号</th>
+                                <th class="scrollable-column">进口报关单号</th>
+                                <th class="scrollable-column">对应出口报关单号</th>
                                 <th class="scrollable-column">报关状态</th>
                                 <th class="scrollable-column">贸易条款</th>
-                                <th class="scrollable-column">境内发货人</th>
-                                <th class="scrollable-column">境外收货人</th>
+                                <th class="scrollable-column">境外发货人</th>
+                                <th class="scrollable-column">境内收货人</th>
                                 <th class="scrollable-column">运输方式</th>
-                                <th class="scrollable-column">离境口岸</th>
-                                <th class="scrollable-column">目的港</th>
+                                <th class="scrollable-column">入境口岸</th>
+                                <th class="scrollable-column">起运港</th>
                                 <th class="scrollable-column">申报日期</th>
-                                <th class="scrollable-column">目的国</th>
                                 <th class="scrollable-column">最后更新人</th>
                                 <th class="scrollable-column">最后更新时间</th>
                                 <th class="fixed-column action-column">操作</th>
@@ -221,7 +177,7 @@
             <!-- 分页区域 -->
             <div class="pagination-container">
                 <div class="pagination-info">
-                    共 <span id="total-count">176</span> 条记录，每页显示 
+                    共 <span id="total-count">58</span> 条记录，每页显示 
                     <select id="page-size" onchange="changePageSize()">
                         <option value="10">10</option>
                         <option value="20" selected>20</option>
@@ -233,7 +189,7 @@
                     <button class="page-btn" onclick="goToPage(1)">首页</button>
                     <button class="page-btn" onclick="previousPage()">上一页</button>
                     <span class="page-info">
-                        第 <span id="current-page">1</span> 页，共 <span id="total-pages">9</span> 页
+                        第 <span id="current-page">1</span> 页，共 <span id="total-pages">3</span> 页
                     </span>
                     <button class="page-btn" onclick="nextPage()">下一页</button>
                     <button class="page-btn" onclick="goToPage(-1)">末页</button>
@@ -242,11 +198,11 @@
         </div>
     </div>
 
-    <!-- 报关单详情弹窗 -->
+    <!-- 进口报关单详情弹窗 -->
     <div id="declaration-detail-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>报关单详情</h3>
+                <h3>泰国进口报关单详情</h3>
                 <span class="close" onclick="closeDeclarationDetailModal()">&times;</span>
             </div>
             <div class="modal-body">
@@ -258,8 +214,12 @@
                             <span id="detail-batch-no"></span>
                         </div>
                         <div class="detail-item">
-                            <label>报关单号：</label>
+                            <label>进口报关单号：</label>
                             <span id="detail-declaration-no"></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>对应出口报关单号：</label>
+                            <span id="detail-export-declaration-no"></span>
                         </div>
                         <div class="detail-item">
                             <label>报关状态：</label>
@@ -276,24 +236,24 @@
                     <h4>货物信息</h4>
                     <div class="detail-grid">
                         <div class="detail-item">
-                            <label>境内发货人：</label>
-                            <span id="detail-domestic-shipper"></span>
+                            <label>境外发货人：</label>
+                            <span id="detail-foreign-shipper"></span>
                         </div>
                         <div class="detail-item">
-                            <label>境外收货人：</label>
-                            <span id="detail-foreign-consignee"></span>
+                            <label>境内收货人：</label>
+                            <span id="detail-domestic-consignee"></span>
                         </div>
                         <div class="detail-item">
                             <label>运输方式：</label>
                             <span id="detail-transport-mode"></span>
                         </div>
                         <div class="detail-item">
-                            <label>离境口岸：</label>
-                            <span id="detail-departure-port"></span>
+                            <label>入境口岸：</label>
+                            <span id="detail-entry-port"></span>
                         </div>
                         <div class="detail-item">
-                            <label>目的港：</label>
-                            <span id="detail-destination-port"></span>
+                            <label>起运港：</label>
+                            <span id="detail-departure-port"></span>
                         </div>
                         <div class="detail-item">
                             <label>最后更新人：</label>
@@ -308,15 +268,12 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeDeclarationDetailModal()">关闭</button>
-                <button class="btn btn-primary" onclick="editDeclaration()">编辑</button>
+                <!-- 暂不提供编辑功能 -->
             </div>
         </div>
     </div>
 
-    <script src="customs-declaration-management.js"></script>
-</body>
-</html>
-<!-- 导出明细弹窗 -->
+    <!-- 导出明细弹窗 -->
     <div id="export-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -374,3 +331,7 @@
             </div>
         </div>
     </div>
+
+    <script src="import-declaration-thailand.js"></script>
+</body>
+</html>

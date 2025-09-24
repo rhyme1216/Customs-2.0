@@ -297,7 +297,9 @@ function generateProductData(countryConfig, count = 5, isChina = false, countryK
     return Array.from({ length: count }, (_, index) => {
         const template = productTemplates[index % productTemplates.length];
         const baseId = `10000${index + 1}234567${index}`;
-        const intlId = `80000${index + 1}234567${index}`;
+        // 生成8开头11位数字的国际SKU
+        const suffix = (index + 1).toString().padStart(2, '0') + Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+        const intlId = `8${suffix.slice(0, 10)}`; // 确保总长度为11位
         
         const isControlled = getRandomStatus('isControlled');
         // 为中国TAB生成更多要素待确认状态的数据
@@ -512,6 +514,12 @@ const countryConfigs = {
         countervailing: () => Math.floor(Math.random() * 30),
         isControlled: () => Math.random() > 0.8 ? '是' : '否',
         controlInfo: () => Math.random() > 0.8 ? '需要CE认证' : ''
+    },
+    gam: {
+        exportTaxRate: () => Math.floor(Math.random() * 17),
+        exportTariffRate: () => Math.floor(Math.random() * 10),
+        isControlled: () => Math.random() > 0.8 ? '是' : '否',
+        controlInfo: () => Math.random() > 0.8 ? '需要许可证' : ''
     }
 };
 
@@ -578,6 +586,12 @@ const countrySpecificColumns = {
         { key: 'countervailing', title: '反补贴税%', width: 120, numeric: true },
         { key: 'isControlled', title: '是否管制', width: 100 },
         { key: 'controlInfo', title: '管制信息', width: 150 }
+    ],
+    gam: [
+        { key: 'exportTaxRate', title: '出口退税率%', width: 120, numeric: true },
+        { key: 'exportTariffRate', title: '出口关税税率%', width: 120, numeric: true },
+        { key: 'isControlled', title: '是否管制', width: 100 },
+        { key: 'controlInfo', title: '管制信息', width: 150 }
     ]
 };
 
@@ -602,12 +616,13 @@ const countryNameMap = {
     hungary: '匈牙利', 
     brazil: '巴西',
     vietnam: '越南',
-    malaysia: '马来'
+    malaysia: '马来',
+    gam: 'GAM'
 };
 
 Object.keys(countryConfigs).forEach(country => {
     const config = processConfig(countryConfigs[country]);
-    const isChina = country === 'china';
+    const isChina = country === 'china' || country === 'gam';
     
     // 传递isChina和countryKey参数给数据生成函数
     staticMockData[country] = generateProductData(config, 5, isChina, country);
@@ -619,7 +634,8 @@ Object.keys(countryConfigs).forEach(country => {
         hungary: '匈牙利TARIC Code',
         brazil: '巴西NCM Code',
         vietnam: '越南HS Code',
-        malaysia: '马来HS Code'
+        malaysia: '马来HS Code',
+        gam: 'GAM HS Code'
     }[country];
     
     // 中国使用包含要素状态的列配置，其他国家不包含要素状态

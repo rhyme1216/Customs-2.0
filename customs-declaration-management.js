@@ -1,9 +1,9 @@
-// 报关单管理页面JavaScript
+// 出口报关单管理页面JavaScript
 
 // 全局变量
 let currentPage = 1;
 let pageSize = 20;
-let totalPages = 8;
+let totalPages = 9;
 let currentStatus = 'all';
 let currentDeclarationData = [];
 
@@ -21,6 +21,8 @@ const mockDeclarationData = [
         transportMode: '航空',
         departurePort: '香港',
         destinationPort: '深圳',
+        declarationDate: '2024-01-15',
+        destinationCountry: '泰国',
         lastUpdater: '张三',
         lastUpdateTime: '2024-01-15 14:30:25'
     },
@@ -36,6 +38,8 @@ const mockDeclarationData = [
         transportMode: '海运',
         departurePort: '上海港',
         destinationPort: '广州港',
+        declarationDate: '2024-01-16',
+        destinationCountry: '马来西亚',
         lastUpdater: '李四',
         lastUpdateTime: '2024-01-16 09:15:42'
     },
@@ -51,6 +55,8 @@ const mockDeclarationData = [
         transportMode: '航空',
         departurePort: '首尔',
         destinationPort: '北京',
+        declarationDate: '2024-01-17',
+        destinationCountry: '越南',
         lastUpdater: '王五',
         lastUpdateTime: '2024-01-17 16:45:18'
     },
@@ -66,6 +72,8 @@ const mockDeclarationData = [
         transportMode: '其他',
         departurePort: '宁波港',
         destinationPort: '杭州',
+        declarationDate: '2024-01-18',
+        destinationCountry: '印尼',
         lastUpdater: '赵六',
         lastUpdateTime: '2024-01-18 11:20:33'
     },
@@ -81,8 +89,61 @@ const mockDeclarationData = [
         transportMode: '航空',
         departurePort: '东京',
         destinationPort: '成都',
+        declarationDate: '2024-01-19',
+        destinationCountry: '匈牙利',
         lastUpdater: '孙七',
         lastUpdateTime: '2024-01-19 13:55:07'
+    },
+    {
+        id: 6,
+        batchNo: 'B202401006',
+        declarationNo: '',
+        status: 'awaiting-receipt',
+        statusText: '待收货',
+        tradeTerms: 'FOB',
+        domesticShipper: '深圳跨境科技有限公司',
+        foreignConsignee: '美国ABC进出口公司',
+        transportMode: '海运',
+        departurePort: '洛杉矶港',
+        destinationPort: '深圳港',
+        declarationDate: '2024-01-20',
+        destinationCountry: '巴西',
+        lastUpdater: '陈八',
+        lastUpdateTime: '2024-01-20 10:30:15'
+    },
+    {
+        id: 7,
+        batchNo: 'B202401007',
+        declarationNo: '',
+        status: 'awaiting-receipt',
+        statusText: '待收货',
+        tradeTerms: 'CIF',
+        domesticShipper: '广州国际贸易公司',
+        foreignConsignee: '欧洲DEF集团',
+        transportMode: '海运',
+        departurePort: '汉堡港',
+        destinationPort: '广州港',
+        declarationDate: '2024-01-21',
+        destinationCountry: 'GAM',
+        lastUpdater: '刘九',
+        lastUpdateTime: '2024-01-21 15:45:30'
+    },
+    {
+        id: 8,
+        batchNo: 'B202401008',
+        declarationNo: '',
+        status: 'awaiting-receipt',
+        statusText: '待收货',
+        tradeTerms: 'CFR',
+        domesticShipper: '上海电子商务有限公司',
+        foreignConsignee: '日本GHI株式会社',
+        transportMode: '航空',
+        departurePort: '成田机场',
+        destinationPort: '浦东机场',
+        declarationDate: '2024-01-22',
+        destinationCountry: '泰国',
+        lastUpdater: '周十',
+        lastUpdateTime: '2024-01-22 08:20:45'
     }
 ];
 
@@ -163,6 +224,11 @@ function getActionButtons(item) {
     let buttons = '';
     
     switch(item.status) {
+        case 'awaiting-receipt': // 待收货
+            buttons = `
+                <button class="action-btn action-btn-view" onclick="viewDeclaration(${item.id})">详情</button>
+            `;
+            break;
         case 'pending': // 待报关
             buttons = `
                 <button class="action-btn action-btn-edit" onclick="editDeclaration(${item.id})">编辑</button>
@@ -222,6 +288,8 @@ function renderTableData(data) {
             <td class="scrollable-column">${item.transportMode}</td>
             <td class="scrollable-column">${item.departurePort}</td>
             <td class="scrollable-column">${item.destinationPort}</td>
+            <td class="scrollable-column">${item.declarationDate || '-'}</td>
+            <td class="scrollable-column">${item.destinationCountry || '-'}</td>
             <td class="scrollable-column">${item.lastUpdater}</td>
             <td class="scrollable-column">${item.lastUpdateTime}</td>
             <td class="fixed-column action-column">
@@ -263,6 +331,7 @@ function updatePaginationButtons() {
 function updateStatusTabBadges() {
     const statusCounts = {
         all: mockDeclarationData.length,
+        'awaiting-receipt': mockDeclarationData.filter(item => item.status === 'awaiting-receipt').length,
         pending: mockDeclarationData.filter(item => item.status === 'pending').length,
         processing: mockDeclarationData.filter(item => item.status === 'processing').length,
         completed: mockDeclarationData.filter(item => item.status === 'completed').length
@@ -284,8 +353,10 @@ function searchDeclarations() {
     const supervisionMode = document.getElementById('supervision-mode').value;
     const transportMode = document.getElementById('transport-mode').value;
     const voyageNo = document.getElementById('voyage-no').value.trim();
-    const billOfLading = document.getElementById('bill-of-lading').value.trim();
+    const billOfLading = document.getElementById('bill-no').value.trim();
     const declarationDate = document.getElementById('declaration-date').value;
+    const destinationCountry = document.getElementById('destination-country').value;
+    const targetCountry = document.getElementById('target-country').value;
     
     console.log('查询条件:', {
         batchNo,
@@ -295,7 +366,9 @@ function searchDeclarations() {
         transportMode,
         voyageNo,
         billOfLading,
-        declarationDate
+        declarationDate,
+        destinationCountry,
+        targetCountry
     });
     
     // 这里应该调用API进行查询
@@ -311,8 +384,10 @@ function resetSearch() {
     document.getElementById('supervision-mode').value = '';
     document.getElementById('transport-mode').value = '';
     document.getElementById('voyage-no').value = '';
-    document.getElementById('bill-of-lading').value = '';
+    document.getElementById('bill-no').value = '';
     document.getElementById('declaration-date').value = '';
+    document.getElementById('destination-country').value = '';
+    document.getElementById('target-country').value = '';
     
     // 重新加载数据
     loadDeclarationData();

@@ -1,4 +1,4 @@
-/* 出口报关单管理页面特定样式 */
+/* 进口报关单管理页面样式 - 与出口报关单管理保持一致 */
 
 /* 主内容区域 */
 .main-content-wrapper {
@@ -30,7 +30,7 @@
     color: #ccc;
 }
 
-/* 状态标签页 */
+/* 状态标签页 - 保持与出口报关单一致 */
 .status-tabs {
     display: flex;
     background-color: #ffffff;
@@ -84,7 +84,7 @@
     color: #ffffff;
 }
 
-/* 查询条件区域 */
+/* 查询条件区域 - 与出口报关单保持一致 */
 .search-container {
     background-color: #ffffff;
     border: 1px solid #e0e0e0;
@@ -102,7 +102,7 @@
     display: flex;
     gap: 20px;
     margin-bottom: 15px;
-    flex-wrap: nowrap; /* 不换行，确保一行显示4个 */
+    flex-wrap: nowrap;
 }
 
 .search-row:last-child {
@@ -112,13 +112,13 @@
 .form-group {
     display: flex;
     align-items: center;
-    min-width: 220px; /* 增加最小宽度以适应更长的标签 */
+    min-width: 220px;
     flex: 1;
-    max-width: calc(25% - 15px); /* 确保每行最多4个字段 */
+    max-width: calc(25% - 15px);
 }
 
 .form-group label {
-    min-width: 85px; /* 稍微增加标签宽度 */
+    min-width: 85px;
     font-size: 14px;
     color: #333333;
     margin-right: 10px;
@@ -135,29 +135,6 @@
     font-size: 14px;
     transition: border-color 0.3s ease;
     box-sizing: border-box;
-}
-
-/* 日期区间样式 */
-.date-range-group {
-    min-width: 280px;
-}
-
-.date-range {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-}
-
-.date-range input {
-    flex: 1;
-    min-width: 120px;
-}
-
-.date-separator {
-    font-size: 14px;
-    color: #666666;
-    white-space: nowrap;
 }
 
 .form-group input:focus,
@@ -224,16 +201,38 @@
     background-color: #da190b;
 }
 
-.btn-warning {
-    background-color: #ff9800;
-    color: #ffffff;
+/* 导出按钮区域 */
+.export-section {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: flex-start;
 }
 
-.btn-warning:hover {
-    background-color: #f57c00;
+.export-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    height: 30px;
+    padding: 0 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s;
+    box-sizing: border-box;
 }
 
-/* 表格样式 */
+.export-btn:hover {
+    background: #0056b3;
+}
+
+.export-icon {
+    font-size: 16px;
+}
+
+/* 表格样式 - 与出口报关单保持一致 */
 .table-container {
     background-color: #ffffff;
     border-radius: 6px;
@@ -252,7 +251,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
-    min-width: 1200px; /* 确保表格有最小宽度以触发横向滚动 */
+    min-width: 1200px;
 }
 
 /* 固定列样式 */
@@ -320,11 +319,6 @@
     white-space: nowrap;
 }
 
-.status-awaiting-receipt {
-    background-color: #fff8e1;
-    color: #f57c00;
-}
-
 .status-pending {
     background-color: #fff3e0;
     color: #f57c00;
@@ -363,15 +357,7 @@
     text-decoration: underline;
 }
 
-.action-btn-view {
-    color: #1976d2;
-}
-
-.action-btn-edit {
-    color: #1976d2;
-}
-
-.action-btn-confirm {
+.action-btn.view {
     color: #1976d2;
 }
 
@@ -535,145 +521,32 @@
     flex: 1;
 }
 
-/* 响应式设计 */
-@media (max-width: 1400px) {
-    .search-row {
-        flex-wrap: wrap;
-    }
-    
-    .form-group {
-        max-width: calc(50% - 10px); /* 中等屏幕显示2列 */
-        min-width: 250px;
-    }
+/* 国家特色的状态颜色 */
+.status-badge.thailand {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
 }
 
-@media (max-width: 1200px) {
-    .search-row {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .form-group {
-        max-width: 100%; /* 小屏幕显示1列 */
-        min-width: auto;
-    }
+.status-badge.hungary {
+    background: linear-gradient(45deg, #4ecdc4, #6edbd6);
 }
 
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
-    
-    .status-tabs {
-        flex-wrap: wrap;
-    }
-    
-    .status-tab-btn {
-        flex: 1;
-        min-width: 120px;
-        justify-content: center;
-    }
-    
-    .search-actions {
-        flex-direction: column;
-    }
-    
-    .pagination-container {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .modal-content {
-        width: 95%;
-        margin: 10px auto;
-    }
-    
-    .detail-grid {
-        grid-template-columns: 1fr;
-    }
-}
-/* 导出按钮区域样式 */
-.export-section {
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: flex-start;
+.status-badge.malaysia {
+    background: linear-gradient(45deg, #45b7d1, #69c7e3);
 }
 
-.export-btn {
-    background: #007bff;
-    color: white;
-    border: none;
-    height: 30px;
-    padding: 0 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background-color 0.3s;
-    box-sizing: border-box;
+.status-badge.indonesia {
+    background: linear-gradient(45deg, #96ceb4, #a8d5ba);
 }
 
-.export-btn:hover {
-    background: #0056b3;
+.status-badge.brazil {
+    background: linear-gradient(45deg, #feca57, #fed071);
 }
 
-.export-icon {
-    font-size: 16px;
+.status-badge.vietnam {
+    background: linear-gradient(45deg, #ff9ff3, #f368e0);
 }
 
 /* 导出弹窗样式 */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 10% auto;
-    border-radius: 8px;
-    width: 500px;
-    max-width: 90%;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modal-header h3 {
-    margin: 0;
-    color: #333;
-    font-size: 18px;
-}
-
-.close {
-    color: #aaa;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 1;
-}
-
-.close:hover {
-    color: #333;
-}
-
-.modal-body {
-    padding: 20px;
-}
-
 .form-section {
     margin-bottom: 25px;
 }
@@ -817,14 +690,6 @@
     background: white;
 }
 
-.modal-footer {
-    padding: 20px;
-    border-top: 1px solid #eee;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
 .btn-cancel, .btn-confirm {
     padding: 8px 20px;
     border: none;
@@ -851,4 +716,130 @@
 
 .btn-confirm:hover {
     background: #0056b3;
+}
+
+/* 响应式设计 */
+@media (max-width: 1400px) {
+    .search-row {
+        flex-wrap: wrap;
+    }
+    
+    .form-group {
+        max-width: calc(50% - 10px);
+        min-width: 250px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .search-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .form-group {
+        max-width: 100%;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .status-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .status-tab-btn {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+    }
+    
+    .search-actions {
+        flex-direction: column;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px auto;
+    }
+    
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 加载状态样式 */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* 空数据状态样式 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+}
+
+.empty-state .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state .empty-text {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.empty-state .empty-hint {
+    font-size: 14px;
+    color: #ccc;
+}
+
+/* 批量操作区域样式 */
+.batch-actions {
+    margin: 16px 0;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    display: none;
+}
+
+.batch-actions.show {
+    display: block;
+}
+
+.batch-actions .selected-count {
+    color: #007bff;
+    font-weight: 500;
+    margin-right: 16px;
+}
+
+.batch-actions .btn {
+    margin-right: 8px;
 }

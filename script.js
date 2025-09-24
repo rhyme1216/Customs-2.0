@@ -87,8 +87,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // 如果是报关单管理，跳转到报关单管理页面
-        if (selectedMenu === '报关单管理') {
+        // 如果是出口报关单管理，跳转到报关单管理页面
+        if (selectedMenu === '出口报关单管理') {
             window.location.href = 'customs-declaration-management.html';
             return;
         }

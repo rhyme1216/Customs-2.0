@@ -3,7 +3,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-size: 14px;
+    font-size: 13px;
     font-family: "Microsoft YaHei", Arial, sans-serif;
 }
 
@@ -44,7 +44,7 @@ body {
 
 /* 面包屑导航 */
 .breadcrumb {
-    font-size: 14px;
+    font-size: 13px;
     color: #666;
     margin-bottom: 20px;
     padding: 10px 0;
@@ -67,7 +67,7 @@ body {
 .basic-info-section h3 {
     margin: 0 0 20px 0;
     color: #333;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 500;
     border-bottom: 2px solid #007bff;
     padding-bottom: 8px;
@@ -89,76 +89,55 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0; /* 防止flex子项收缩问题 */
 }
 
 .form-group label {
     margin-bottom: 5px;
     font-weight: 500;
     color: #333;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .form-group input,
 .form-group select {
     padding: 8px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid #d1d5db;
     border-radius: 4px;
-    font-size: 14px;
-    background: #f8f9fa;
+    font-size: 13px;
+    background: #ffffff;
+    height: 30px; /* 设置组件高度为30px */
+    box-sizing: border-box;
+    color: #374151;
 }
 
 .form-group input[readonly] {
-    background: #f8f9fa;
-    color: #666;
+    background: #f9fafb;
+    color: #6b7280;
+    border-color: #e5e7eb;
 }
 
-/* CBM字段特殊样式 */
-#total-cbm-1,
-#total-cbm-2,
-input[id^="total-cbm-"] {
-    background: #e8f5e8 !important;
-    color: #2e7d32 !important;
-    font-weight: 500;
-    border-color: #4caf50 !important;
+.form-group select {
+    background: #ffffff;
+    cursor: pointer;
+    color: #374151;
 }
 
+.form-group select:focus,
+.form-group input:focus {
+    border-color: #6b7280;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.1);
+}
+
+/* 必填字段标识 */
 .form-group.required label {
     position: relative;
 }
 
 .required-mark {
-    color: #ff4444;
+    color: #6b7280;
     margin-left: 2px;
-}
-
-.form-group select {
-    background: white;
-    cursor: pointer;
-}
-
-.form-group select:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-/* 运输方式字段特殊样式 */
-#transport-mode {
-    background: #fff5f5;
-    border: 1px solid #ff9800;
-    font-weight: 500;
-    min-width: 150px; /* 确保能显示完整的选项文字 */
-}
-
-#transport-mode:focus {
-    border-color: #ff5722;
-    box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.25);
-}
-
-/* 运输方式选项的样式优化 */
-#transport-mode option {
-    padding: 5px;
-    font-size: 14px;
 }
 
 /* TAB区域样式 */
@@ -178,21 +157,22 @@ input[id^="total-cbm-"] {
     padding: 15px 25px;
     background: none;
     border: none;
-    font-size: 14px;
-    color: #666;
+    font-size: 13px;
+    color: #6b7280;
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.3s;
 }
 
 .tab-btn.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
-    background: #f8f9fa;
+    color: #374151;
+    border-bottom-color: #374151;
+    background: #f9fafb;
 }
 
 .tab-btn:hover {
-    background: #f8f9fa;
+    background: #f9fafb;
+    color: #374151;
 }
 
 .tab-content {
@@ -207,6 +187,118 @@ input[id^="total-cbm-"] {
 /* 表格样式 */
 .table-container {
     margin-bottom: 20px;
+}
+
+/* 原始装箱SKU明细统计信息样式 */
+.original-details-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.summary-header {
+    margin-bottom: 12px;
+}
+
+.summary-header h4 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.summary-header h4:before {
+    content: "📊";
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.summary-row {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 8px 12px;
+    transition: all 0.2s;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.summary-row:hover {
+    border-color: #cbd5e0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.package-label {
+    color: #4a5568;
+    font-weight: 500;
+    font-size: 13px;
+    margin-right: 4px;
+}
+
+.package-number {
+    color: #3182ce;
+    font-weight: 600;
+    font-size: 13px;
+    font-family: monospace;
+    background: #ebf8ff;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-right: 4px;
+}
+
+.weight-separator {
+    color: #cbd5e0;
+    margin: 0 8px;
+    font-weight: normal;
+}
+
+.weight-label {
+    color: #4a5568;
+    font-size: 13px;
+    font-weight: 500;
+    margin-right: 4px;
+}
+
+.net-weight-value {
+    color: #38a169;
+    font-weight: 700;
+    font-size: 13px;
+    margin-right: 4px;
+}
+
+.gross-weight-value {
+    color: #ed8936;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+    .summary-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .weight-separator {
+        display: none;
+    }
+    
+    .package-number {
+        margin-bottom: 4px;
+    }
 }
 
 .table-wrapper {
@@ -244,22 +336,38 @@ input[id^="total-cbm-"] {
 .data-table th:nth-child(4), /* 内贸段订单号 */
 .data-table th:nth-child(5), /* 国际订单号 */
 .data-table th:nth-child(6), /* 集装箱号/车号 */
-.data-table th:nth-child(7), /* 包装编号 */
-.data-table th:nth-child(8), /* 长（m） */
-.data-table th:nth-child(9), /* 宽（m） */
-.data-table th:nth-child(10) /* 高（m） */ {
+.data-table th:nth-child(7), /* 商品中文标题 */
+.data-table th:nth-child(8), /* 包装编号 */
+.data-table th:nth-child(9), /* 长（m） */
+.data-table th:nth-child(10), /* 宽（m） */
+.data-table th:nth-child(11) /* 高（m） */ {
     background: #f0f8ff;
     color: #2196f3;
     border-left: 1px solid #e3f2fd;
     min-width: 100px;
 }
 
-/* 尺寸相关列样式 */
-.data-table th:nth-child(8), /* 长（m） */
-.data-table th:nth-child(9), /* 宽（m） */
-.data-table th:nth-child(10) /* 高（m） */ {
-    min-width: 70px;
-    text-align: center;
+/* 品牌和型号列的样式 */
+.data-table th:nth-child(15), /* 关务品牌（不可编辑） */
+.data-table th:nth-child(16) /* 关务型号（不可编辑） */ {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+/* 特定列的最小宽度设置 */
+.data-table th:nth-child(9), /* 长（m） */
+.data-table th:nth-child(10), /* 宽（m） */
+.data-table th:nth-child(11) /* 高（m） */ {
+    min-width: 80px;
+}
+
+/* 商品中文标题列的样式 */
+.data-table th:nth-child(7), /* 商品中文标题 */
+.data-table td:nth-child(7) {
+    min-width: 200px;
+    max-width: 300px;
+    word-break: break-word;
+    white-space: normal;
 }
 
 .data-table td {
@@ -288,6 +396,15 @@ input[id^="total-cbm-"] {
     border-left: 1px solid #e3f2fd;
 }
 
+/* 关务品牌和关务型号（不可编辑）单元格样式 */
+.data-table td:nth-child(14), /* 关务品牌（不可编辑） */
+.data-table td:nth-child(15) /* 关务型号（不可编辑） */ {
+    background: #f8f9fa;
+    color: #999;
+    border-left: 1px solid #ddd;
+    font-style: italic;
+}
+
 /* 尺寸相关单元格居中 */
 .data-table td:nth-child(8), /* 长（m） */
 .data-table td:nth-child(9), /* 宽（m） */
@@ -299,14 +416,57 @@ input[id^="total-cbm-"] {
 .data-table td input {
     width: 100%;
     padding: 4px 6px;
-    border: 1px solid #ddd;
+    border: 1px solid #d1d5db;
     border-radius: 3px;
-    font-size: 12px;
+    font-size: 13px;
+    background: #ffffff;
+    height: 26px;
+    box-sizing: border-box;
+    color: #374151;
+}
+
+.data-table td select {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    font-size: 13px;
+    background: #ffffff;
+    height: 26px;
+    box-sizing: border-box;
+    cursor: pointer;
+    appearance: none; /* 移除默认样式 */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 6px center;
+    background-repeat: no-repeat;
+    background-size: 12px;
+    padding-right: 24px; /* 为下拉箭头留出空间 */
+    color: #374151;
 }
 
 .data-table td input:focus {
-    border-color: #007bff;
+    border-color: #6b7280;
     outline: none;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.1);
+}
+
+.data-table td select:focus {
+    border-color: #6b7280;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.1);
+}
+
+/* 禁用状态的输入框和选择框 */
+.data-table td input.disabled,
+.data-table td select.disabled {
+    background-color: #f9fafb !important;
+    color: #9ca3af !important;
+    cursor: not-allowed !important;
+    border-color: #e5e7eb !important;
+}
+
+.data-table td select.disabled {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
 }
 
 .data-table tr:hover {
@@ -325,6 +485,12 @@ input[id^="total-cbm-"] {
     background: #f0f8ff;
 }
 
+/* 关务品牌和关务型号hover状态 */
+.data-table tr:hover td:nth-child(14), /* 关务品牌（不可编辑） */
+.data-table tr:hover td:nth-child(15) /* 关务型号（不可编辑） */ {
+    background: #f0f0f0;
+}
+
 /* 操作区域样式 */
 .action-section {
     display: flex;
@@ -333,18 +499,23 @@ input[id^="total-cbm-"] {
 }
 
 .auto-split-btn {
-    background: #28a745;
+    background: #374151;
     color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     transition: background-color 0.3s;
 }
 
 .auto-split-btn:hover {
-    background: #218838;
+    background: #4b5563;
+}
+
+.auto-split-btn.disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
 }
 
 /* 拆合单结果样式 */
@@ -367,24 +538,24 @@ input[id^="total-cbm-"] {
 
 .declaration-tab-btn {
     padding: 10px 15px;
-    background: #f8f9fa;
-    border: 1px solid #ddd;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
-    color: #333;
+    font-size: 13px;
+    color: #374151;
     text-align: left;
     transition: all 0.3s;
 }
 
 .declaration-tab-btn:hover {
-    background: #e9ecef;
+    background: #f3f4f6;
+    border-color: #9ca3af;
 }
 
 .declaration-tab-btn.active {
-    background: #007bff;
+    background: #027BFF;
     color: white;
-    border-color: #007bff;
 }
 
 .declaration-content {
@@ -398,7 +569,7 @@ input[id^="total-cbm-"] {
     justify-content: center;
     height: 300px;
     color: #666;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* 报关单详情样式 */
@@ -412,7 +583,7 @@ input[id^="total-cbm-"] {
 
 .detail-form {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 15px;
     margin-bottom: 20px;
 }
@@ -430,11 +601,22 @@ input[id^="total-cbm-"] {
 }
 
 .detail-form input,
-.detail-form select {
+.detail-form select,
+.detail-form textarea {
     padding: 6px 10px;
-    border: 1px solid #ddd;
+    border: 1px solid #d1d5db;
     border-radius: 3px;
     font-size: 13px;
+    background: #ffffff;
+    color: #374151;
+}
+
+.detail-form input:focus,
+.detail-form select:focus,
+.detail-form textarea:focus {
+    border-color: #6b7280;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.1);
 }
 
 .detail-table-container {
@@ -451,34 +633,34 @@ input[id^="total-cbm-"] {
 .table-header-actions h4 {
     margin: 0;
     color: #333;
-    font-size: 16px;
+    font-size: 13px;
 }
 
 .upload-btn {
-    background: #007bff;
+    background: #374151;
     color: white;
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     transition: background-color 0.3s;
 }
 
 .upload-btn:hover {
-    background: #0056b3;
+    background: #4b5563;
 }
 
 .detail-table-container h4 {
     margin: 0 0 10px 0;
     color: #333;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .detail-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .detail-table th,
@@ -511,40 +693,41 @@ input[id^="total-cbm-"] {
 .btn-cancel,
 .btn-save,
 .btn-submit {
-    padding: 10px 25px;
+    padding: 8px 25px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.3s;
 }
 
 .btn-cancel {
-    background: #f8f9fa;
-    color: #6c757d;
-    border: 1px solid #dee2e6;
+    background: #f9fafb;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
 }
 
 .btn-cancel:hover {
-    background: #e9ecef;
+    background: #f3f4f6;
+    border-color: #9ca3af;
 }
 
 .btn-save {
-    background: #6c757d;
+    background: #6b7280;
     color: white;
 }
 
 .btn-save:hover {
-    background: #5a6268;
+    background: #4b5563;
 }
 
 .btn-submit {
-    background: #007bff;
+    background: #027BFF;
     color: white;
 }
 
 .btn-submit:hover {
-    background: #0056b3;
+    background: #0156B3;
 }
 
 /* 响应式设计 */
@@ -555,7 +738,7 @@ input[id^="total-cbm-"] {
     }
     
     .detail-form {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -583,11 +766,17 @@ input[id^="total-cbm-"] {
     }
     
     .detail-form {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
     
     .action-buttons {
         flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-form {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -626,7 +815,7 @@ input[id^="total-cbm-"] {
 .upload-modal-header h3 {
     margin: 0;
     color: #1a365d;
-    font-size: 18px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -658,7 +847,7 @@ input[id^="total-cbm-"] {
 .file-type-section h4 {
     margin: 0 0 15px 0;
     color: #333;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -683,7 +872,7 @@ input[id^="total-cbm-"] {
     display: flex;
     align-items: center;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: #333;
     margin-bottom: 0;
@@ -731,7 +920,7 @@ input[id^="total-cbm-"] {
 .upload-hint {
     display: block;
     color: #666;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .uploaded-file {
@@ -756,7 +945,7 @@ input[id^="total-cbm-"] {
 
 .file-size {
     color: #666;
-    font-size: 12px;
+    font-size: 13px;
     margin-left: 10px;
 }
 
@@ -771,7 +960,7 @@ input[id^="total-cbm-"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 13px;
     margin-left: 10px;
     transition: all 0.2s;
 }
@@ -796,7 +985,7 @@ input[id^="total-cbm-"] {
     padding: 8px 20px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.2s;
 }
 
@@ -812,7 +1001,7 @@ input[id^="total-cbm-"] {
     padding: 8px 20px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.2s;
 }
 
@@ -834,7 +1023,7 @@ input[id^="total-cbm-"] {
 .declaration-info-header h4 {
     margin: 0;
     color: #333;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -844,54 +1033,25 @@ input[id^="total-cbm-"] {
 }
 
 .btn-confirm-customs {
-    background: #28a745;
+    background: #027BFF;
     color: white;
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     transition: all 0.2s;
 }
 
 .btn-confirm-customs:hover {
-    background: #218838;
+    background: #0156B3;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
-}
-
-/* 车号字段特殊样式 */
-#vehicle-number-1,
-#vehicle-number-2,
-#vehicle-number-3,
-#vehicle-number-4 {
-    background: #fff;
-    border: 1px solid #28a745;
-}
-
-#vehicle-number-1[readonly],
-#vehicle-number-2[readonly],
-#vehicle-number-3[readonly],
-#vehicle-number-4[readonly] {
-    background: #f8f9fa;
-    color: #999;
-    border-color: #ddd;
-}
-
-/* CBM字段样式 */
-#total-cbm-1,
-#total-cbm-2,
-#total-cbm-3,
-#total-cbm-4 {
-    background: #e8f5e8;
-    color: #2e7d32;
-    border: 1px solid #81c784;
 }
 
 /* 必填字段标识 */
 .required-mark {
-    color: #ff4444;
+    color: #6b7280;
     margin-left: 2px;
     font-weight: bold;
 }
@@ -906,23 +1066,23 @@ input[id^="total-cbm-"] {
 input.disabled,
 select.disabled,
 textarea.disabled {
-    background-color: #f5f5f5 !important;
-    color: #999 !important;
+    background-color: #f9fafb !important;
+    color: #9ca3af !important;
     cursor: not-allowed !important;
-    border-color: #ddd !important;
+    border-color: #e5e7eb !important;
 }
 
 button.disabled {
-    background-color: #f5f5f5 !important;
-    color: #999 !important;
+    background-color: #f9fafb !important;
+    color: #9ca3af !important;
     cursor: not-allowed !important;
-    border-color: #ddd !important;
+    border-color: #e5e7eb !important;
     opacity: 0.6;
 }
 
 button.disabled:hover {
-    background-color: #f5f5f5 !important;
-    color: #999 !important;
+    background-color: #f9fafb !important;
+    color: #9ca3af !important;
     transform: none !important;
     box-shadow: none !important;
 }
@@ -942,15 +1102,17 @@ textarea {
     resize: vertical;
     min-height: 60px;
     padding: 8px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid #d1d5db;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 13px;
     font-family: inherit;
     line-height: 1.4;
+    background: #ffffff;
+    color: #374151;
 }
 
 textarea:focus {
-    border-color: #007bff;
+    border-color: #6b7280;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.1);
 }

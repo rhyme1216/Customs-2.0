@@ -2,7 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-size: 14px;
+    font-size: 13px;
     font-family: "Microsoft YaHei", Arial, sans-serif;
 }
 
@@ -31,7 +31,7 @@ body {
 .menu-title {
     padding: 15px 20px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: #333333;
     background-color: #ffffff;
@@ -55,7 +55,7 @@ body {
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 12px;
+    font-size: 13px;
     transition: transform 0.3s ease;
 }
 
@@ -78,7 +78,7 @@ body {
 .submenu-item {
     padding: 12px 20px 12px 40px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     color: #666666;
     background-color: #fafafa;
     transition: all 0.3s ease;
@@ -109,14 +109,14 @@ body {
 }
 
 .main-content h1 {
-    font-size: 24px;
+    font-size: 13px;
     color: #333333;
     margin-bottom: 20px;
     font-weight: 500;
 }
 
 .main-content p {
-    font-size: 14px;
+    font-size: 13px;
     color: #666666;
     line-height: 1.6;
 }
