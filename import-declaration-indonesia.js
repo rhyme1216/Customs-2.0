@@ -3,7 +3,7 @@
 // 全局变量
 let currentPage = 1;
 let pageSize = 20;
-let totalCount = 89;
+let totalCount = 5;
 let currentStatus = 'all';
 let tableData = [];
 
@@ -106,11 +106,18 @@ function switchStatus(status) {
 
 // 绑定事件
 function bindEvents() {
+    // 全选checkbox
     const selectAllCheckbox = document.getElementById('select-all');
     if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', toggleSelectAll);
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBatchActions();
+        });
     }
-    
+
     const pageSizeSelect = document.getElementById('page-size');
     if (pageSizeSelect) {
         pageSizeSelect.addEventListener('change', changePageSize);
@@ -135,7 +142,7 @@ function loadDeclarationData() {
 // 生成模拟数据
 function generateMockData() {
     const statuses = ['pending', 'processing', 'completed'];
-    const statusCounts = { all: 89, pending: 23, processing: 41, completed: 25 };
+    const statusCounts = { all: 5, pending: 1, processing: 2, completed: 2 };
     const data = [];
     
     let count = statusCounts[currentStatus] || statusCounts.all;
@@ -210,7 +217,7 @@ function renderTable(data) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td class="fixed-column checkbox-column">
-                <input type="checkbox" class="row-checkbox" value="${item.id}">
+                <input type="checkbox" class="row-checkbox" value="${item.id}" onchange="updateBatchActions()">
             </td>
             <td class="fixed-column batch-column">${item.batchNo}</td>
             <td class="scrollable-column">${item.declarationNo}</td>
@@ -232,7 +239,47 @@ function renderTable(data) {
         tbody.appendChild(row);
     });
     
-    bindRowCheckboxEvents();
+}
+
+// 更新批量操作状态
+function updateBatchActions() {
+    const checkedItems = document.querySelectorAll('.row-checkbox:checked');
+    const batchActionsDiv = document.querySelector('.batch-actions');
+    
+    if (checkedItems.length > 0) {
+        if (!batchActionsDiv) {
+            // 创建批量操作区域
+            const batchActionsHtml = `
+                <div class="batch-actions">
+                    <span class="selected-count">已选中 <strong>${checkedItems.length}</strong> 项</span>
+                    <button class="btn btn-primary" onclick="batchExport()">批量导出</button>
+                    <button class="btn btn-danger" onclick="batchDelete()">批量删除</button>
+                </div>
+            `;
+            // 插入到表格容器之前
+            const tableContainer = document.querySelector('.table-container');
+            tableContainer.insertAdjacentHTML('beforebegin', batchActionsHtml);
+        } else {
+            // 更新选中数量
+            const selectedCount = batchActionsDiv.querySelector('.selected-count strong');
+            if (selectedCount) {
+                selectedCount.textContent = checkedItems.length;
+            }
+        }
+    } else {
+        // 移除批量操作区域
+        if (batchActionsDiv) {
+            batchActionsDiv.remove();
+        }
+    }
+    
+    // 更新全选checkbox状态
+    const selectAllCheckbox = document.getElementById('select-all');
+    const totalCheckboxes = document.querySelectorAll('.row-checkbox');
+    if (selectAllCheckbox && totalCheckboxes.length > 0) {
+        selectAllCheckbox.checked = checkedItems.length === totalCheckboxes.length;
+        selectAllCheckbox.indeterminate = checkedItems.length > 0 && checkedItems.length < totalCheckboxes.length;
+    }
 }
 
 // 获取状态徽章
@@ -244,77 +291,7 @@ function getStatusBadge(status) {
     };
     
     const statusInfo = statusMap[status] || { text: '未知', class: 'status-unknown' };
-    return `<span class="status-badge ${statusInfo.class} ${COUNTRY_CONFIG.code}">${statusInfo.text}</span>`;
-}
-
-// 绑定行选择事件
-function bindRowCheckboxEvents() {
-    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
-    rowCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateSelectAllState);
-    });
-}
-
-// 更新全选状态
-function updateSelectAllState() {
-    const selectAllCheckbox = document.getElementById('select-all');
-    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
-    const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
-    
-    if (checkedCount === 0) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = false;
-    } else if (checkedCount === rowCheckboxes.length) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = true;
-    } else {
-        selectAllCheckbox.indeterminate = true;
-        selectAllCheckbox.checked = false;
-    }
-    
-    toggleBatchActions(checkedCount > 0);
-}
-
-// 切换批量操作区域
-function toggleBatchActions(show) {
-    let batchActions = document.querySelector('.batch-actions');
-    if (!batchActions && show) {
-        batchActions = createBatchActionsElement();
-        const tableContainer = document.querySelector('.table-container');
-        tableContainer.parentNode.insertBefore(batchActions, tableContainer);
-    }
-    
-    if (batchActions) {
-        batchActions.classList.toggle('show', show);
-        if (show) {
-            const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
-            batchActions.querySelector('.selected-count').textContent = `已选择 ${checkedCount} 项`;
-        }
-    }
-}
-
-// 创建批量操作元素
-function createBatchActionsElement() {
-    const div = document.createElement('div');
-    div.className = 'batch-actions';
-    div.innerHTML = `
-        <span class="selected-count">已选择 0 项</span>
-        <button class="btn btn-secondary" onclick="batchExport()">批量导出</button>
-        <button class="btn btn-danger" onclick="batchDelete()">批量删除</button>
-    `;
-    return div;
-}
-
-// 全选/取消全选
-function toggleSelectAll() {
-    const selectAllCheckbox = document.getElementById('select-all');
-    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
-    
-    rowCheckboxes.forEach(checkbox => {
-        checkbox.checked = selectAllCheckbox.checked;
-    });
-    
-    toggleBatchActions(selectAllCheckbox.checked);
+    return `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
 }
 
 // 更新面包屑

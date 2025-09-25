@@ -334,6 +334,11 @@
     color: #2e7d32;
 }
 
+.status-awaiting-receipt {
+    background-color: #fff8e1;
+    color: #f57c00;
+}
+
 /* 操作按钮 */
 .action-buttons {
     display: flex;
@@ -519,31 +524,6 @@
 .detail-item span {
     color: #333333;
     flex: 1;
-}
-
-/* 国家特色的状态颜色 */
-.status-badge.thailand {
-    background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
-}
-
-.status-badge.hungary {
-    background: linear-gradient(45deg, #4ecdc4, #6edbd6);
-}
-
-.status-badge.malaysia {
-    background: linear-gradient(45deg, #45b7d1, #69c7e3);
-}
-
-.status-badge.indonesia {
-    background: linear-gradient(45deg, #96ceb4, #a8d5ba);
-}
-
-.status-badge.brazil {
-    background: linear-gradient(45deg, #feca57, #fed071);
-}
-
-.status-badge.vietnam {
-    background: linear-gradient(45deg, #ff9ff3, #f368e0);
 }
 
 /* 导出弹窗样式 */

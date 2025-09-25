@@ -62,6 +62,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新主内容区域的函数
     function updateMainContent(selectedMenu) {
+        // 如果是跨境商品管理，跳转到商品管理页面
+        if (selectedMenu === '跨境商品管理') {
+            window.location.href = 'customs-product.html';
+            return;
+        }
+        
         // 如果是关务税则维护，跳转到税则库页面
         if (selectedMenu === '关务税则维护') {
             // 跳转到税则库页面，默认显示中国数据
@@ -90,6 +96,37 @@ document.addEventListener('DOMContentLoaded', function() {
         // 如果是出口报关单管理，跳转到报关单管理页面
         if (selectedMenu === '出口报关单管理') {
             window.location.href = 'customs-declaration-management.html';
+            return;
+        }
+        
+        // 各国进口报关单管理页面跳转
+        if (selectedMenu === '泰国进口报关单管理') {
+            window.location.href = 'import-declaration-thailand.html';
+            return;
+        }
+        
+        if (selectedMenu === '匈牙利进口报关单管理') {
+            window.location.href = 'import-declaration-hungary.html';
+            return;
+        }
+        
+        if (selectedMenu === '马来西亚进口报关单管理') {
+            window.location.href = 'import-declaration-malaysia.html';
+            return;
+        }
+        
+        if (selectedMenu === '印尼进口报关单管理') {
+            window.location.href = 'import-declaration-indonesia.html';
+            return;
+        }
+        
+        if (selectedMenu === '巴西进口报关单管理') {
+            window.location.href = 'import-declaration-brazil.html';
+            return;
+        }
+        
+        if (selectedMenu === '越南进口报关单管理') {
+            window.location.href = 'import-declaration-vietnam.html';
             return;
         }
         

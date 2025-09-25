@@ -3,7 +3,7 @@
 // 全局变量
 let currentPage = 1;
 let pageSize = 20;
-let totalCount = 58;
+let totalCount = 5;
 let currentStatus = 'all';
 let tableData = [];
 
@@ -147,7 +147,7 @@ function loadDeclarationData() {
 // 生成模拟数据
 function generateMockData() {
     const statuses = ['pending', 'processing', 'completed'];
-    const statusCounts = { all: 58, pending: 12, processing: 31, completed: 15 };
+    const statusCounts = { all: 5, pending: 1, processing: 2, completed: 2 };
     const data = [];
     
     let count = statusCounts[currentStatus] || statusCounts.all;
@@ -257,7 +257,7 @@ function getStatusBadge(status) {
     };
     
     const statusInfo = statusMap[status] || { text: '未知', class: 'status-unknown' };
-    return `<span class="status-badge ${statusInfo.class} ${COUNTRY_CONFIG.code}">${statusInfo.text}</span>`;
+    return `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
 }
 
 // 绑定行选择事件
@@ -284,39 +284,6 @@ function updateSelectAllState() {
         selectAllCheckbox.indeterminate = true;
         selectAllCheckbox.checked = false;
     }
-    
-    // 显示/隐藏批量操作区域
-    toggleBatchActions(checkedCount > 0);
-}
-
-// 切换批量操作区域
-function toggleBatchActions(show) {
-    let batchActions = document.querySelector('.batch-actions');
-    if (!batchActions && show) {
-        batchActions = createBatchActionsElement();
-        const tableContainer = document.querySelector('.table-container');
-        tableContainer.parentNode.insertBefore(batchActions, tableContainer);
-    }
-    
-    if (batchActions) {
-        batchActions.classList.toggle('show', show);
-        if (show) {
-            const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
-            batchActions.querySelector('.selected-count').textContent = `已选择 ${checkedCount} 项`;
-        }
-    }
-}
-
-// 创建批量操作元素
-function createBatchActionsElement() {
-    const div = document.createElement('div');
-    div.className = 'batch-actions';
-    div.innerHTML = `
-        <span class="selected-count">已选择 0 项</span>
-        <button class="btn btn-secondary" onclick="batchExport()">批量导出</button>
-        <button class="btn btn-danger" onclick="batchDelete()">批量删除</button>
-    `;
-    return div;
 }
 
 // 全选/取消全选
@@ -327,8 +294,6 @@ function toggleSelectAll() {
     rowCheckboxes.forEach(checkbox => {
         checkbox.checked = selectAllCheckbox.checked;
     });
-    
-    toggleBatchActions(selectAllCheckbox.checked);
 }
 
 // 更新面包屑
@@ -415,71 +380,6 @@ function resetSearch() {
     loadDeclarationData();
     
     showSuccessMessage('查询条件已重置');
-}
-
-// 显示导出弹窗
-function showExportModal() {
-    const modal = document.getElementById('export-modal');
-    modal.style.display = 'block';
-}
-
-// 关闭导出弹窗
-function closeExportModal() {
-    const modal = document.getElementById('export-modal');
-    modal.style.display = 'none';
-}
-
-// 确认导出
-function confirmExport() {
-    const form = document.getElementById('export-form');
-    const formData = new FormData(form);
-    
-    const fileTypes = formData.getAll('fileType');
-    const preferential = formData.get('preferential');
-    
-    if (!preferential) {
-        alert('请选择是否享惠');
-        return;
-    }
-    
-    console.log('导出设置:', { fileTypes, preferential });
-    
-    showSuccessMessage('导出任务已开始，请稍候...');
-    closeExportModal();
-    
-    // 模拟导出过程
-    setTimeout(() => {
-        showSuccessMessage('导出完成！');
-    }, 2000);
-}
-
-// 批量导出
-function batchExport() {
-    const checkedItems = document.querySelectorAll('.row-checkbox:checked');
-    if (checkedItems.length === 0) {
-        alert('请先选择要导出的记录');
-        return;
-    }
-    
-    showExportModal();
-}
-
-// 批量删除
-function batchDelete() {
-    const checkedItems = document.querySelectorAll('.row-checkbox:checked');
-    if (checkedItems.length === 0) {
-        alert('请先选择要删除的记录');
-        return;
-    }
-    
-    if (!confirm(`确认删除选中的 ${checkedItems.length} 条记录吗？`)) {
-        return;
-    }
-    
-    showSuccessMessage('删除成功');
-    
-    // 重新加载数据
-    loadDeclarationData();
 }
 
 // 分页相关函数
